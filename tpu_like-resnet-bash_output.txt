@@ -1,0 +1,161 @@
+python3 example.py
+2024-11-05 23:26:35,779 - __init__ +208 - WARNING - Operator Conv not defined in mapping. Using default mapping instead.
+2024-11-05 23:26:35,784 - __init__ +208 - WARNING - Operator Conv_downsample not defined in mapping. Using default mapping instead.
+2024-11-05 23:26:35,822 - run +49 - INFO - Processing  example_name_of_layer0...
+2024-11-05 23:26:35,823 - check_and_reduce +178 - WARNING - User provided spatial unrolling (C:32) in Dimension D1 exceeded maximally allowed unrolling of 3. Reducing unrolling to this value.
+2024-11-05 23:26:35,823 - run +92 - INFO - example_name_of_layer0: Launching spatial mapping 1/1 :{D1: {C: 3}, D2: {K: 32}}.
+2024-11-05 23:26:35,833 - run +48 - INFO - Saved CostModelEvaluation(example_name_of_layer0, Core(0)) with energy 3.662e+08 and latency 2.477e+06 to outputs/2024-11-05 23:26:35.692004/example_name_of_layer0_complete.json
+2024-11-05 23:26:36,113 - run +49 - INFO - Processing  Layer1...
+2024-11-05 23:26:36,113 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 64, OY: 56, OX: 56, FX: 3, FY: 3}. Removing C.
+2024-11-05 23:26:36,114 - run +92 - INFO - Layer1: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 284.55it/s]
+2024-11-05 23:26:38,671 - run +48 - INFO - Saved CostModelEvaluation(Layer1, Core(0)) with energy 9.524e+07 and latency 1.335e+05 to outputs/2024-11-05 23:26:35.692004/Layer1_complete.json
+2024-11-05 23:26:38,759 - run +49 - INFO - Processing  Layer2...
+2024-11-05 23:26:38,759 - run +92 - INFO - Layer2: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 282.32it/s]
+2024-11-05 23:26:41,313 - run +48 - INFO - Saved CostModelEvaluation(Layer2, Core(0)) with energy 6.829e+07 and latency 1.137e+05 to outputs/2024-11-05 23:26:35.692004/Layer2_complete.json
+2024-11-05 23:26:41,398 - run +49 - INFO - Processing  Layer3...
+2024-11-05 23:26:41,399 - run +92 - INFO - Layer3: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 296.99it/s]
+2024-11-05 23:26:43,826 - run +48 - INFO - Saved CostModelEvaluation(Layer3, Core(0)) with energy 6.829e+07 and latency 1.137e+05 to outputs/2024-11-05 23:26:35.692004/Layer3_complete.json
+2024-11-05 23:26:43,912 - run +49 - INFO - Processing  Layer4...
+2024-11-05 23:26:43,913 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 64, OY: 56, OX: 56}. Removing C.
+2024-11-05 23:26:43,913 - run +92 - INFO - Layer4: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:01<00:00, 435.65it/s]
+2024-11-05 23:26:45,569 - run +48 - INFO - Saved CostModelEvaluation(Layer4, Core(0)) with energy 5.524e+07 and latency 6.253e+04 to outputs/2024-11-05 23:26:35.692004/Layer4_complete.json
+2024-11-05 23:26:45,657 - run +49 - INFO - Processing  Layer5...
+2024-11-05 23:26:45,658 - run +92 - INFO - Layer5: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 271.39it/s]
+2024-11-05 23:26:48,314 - run +48 - INFO - Saved CostModelEvaluation(Layer5, Core(0)) with energy 6.829e+07 and latency 1.137e+05 to outputs/2024-11-05 23:26:35.692004/Layer5_complete.json
+2024-11-05 23:26:48,405 - run +49 - INFO - Processing  Layer6...
+2024-11-05 23:26:48,405 - run +92 - INFO - Layer6: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 269.31it/s]
+2024-11-05 23:26:51,084 - run +48 - INFO - Saved CostModelEvaluation(Layer6, Core(0)) with energy 6.829e+07 and latency 1.137e+05 to outputs/2024-11-05 23:26:35.692004/Layer6_complete.json
+2024-11-05 23:26:51,180 - run +49 - INFO - Processing  Layer7...
+2024-11-05 23:26:51,180 - run +92 - INFO - Layer7: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:01<00:00, 421.39it/s]
+2024-11-05 23:26:52,892 - run +48 - INFO - Saved CostModelEvaluation(Layer7, Core(0)) with energy 5.524e+07 and latency 6.253e+04 to outputs/2024-11-05 23:26:35.692004/Layer7_complete.json
+2024-11-05 23:26:53,059 - run +49 - INFO - Processing  Layer8...
+2024-11-05 23:26:53,060 - run +92 - INFO - Layer8: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 267.77it/s]
+2024-11-05 23:26:55,752 - run +48 - INFO - Saved CostModelEvaluation(Layer8, Core(0)) with energy 4.791e+07 and latency 6.069e+04 to outputs/2024-11-05 23:26:35.692004/Layer8_complete.json
+2024-11-05 23:26:55,842 - run +49 - INFO - Processing  Layer10...
+2024-11-05 23:26:55,842 - run +92 - INFO - Layer10: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 275.56it/s]
+2024-11-05 23:26:58,459 - run +48 - INFO - Saved CostModelEvaluation(Layer10, Core(0)) with energy 4.791e+07 and latency 6.069e+04 to outputs/2024-11-05 23:26:35.692004/Layer10_complete.json
+2024-11-05 23:26:58,607 - run +49 - INFO - Processing  Layer9...
+2024-11-05 23:26:58,608 - run +92 - INFO - Layer9: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 285.67it/s]
+2024-11-05 23:27:01,131 - run +48 - INFO - Saved CostModelEvaluation(Layer9, Core(0)) with energy 5.929e+07 and latency 1.175e+05 to outputs/2024-11-05 23:26:35.692004/Layer9_complete.json
+2024-11-05 23:27:01,218 - run +49 - INFO - Processing  Layer11...
+2024-11-05 23:27:01,218 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 128, OY: 28, OX: 28}. Removing C.
+2024-11-05 23:27:01,218 - run +92 - INFO - Layer11: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 360/360 [00:00<00:00, 419.18it/s]
+2024-11-05 23:27:02,080 - run +48 - INFO - Saved CostModelEvaluation(Layer11, Core(0)) with energy 2.762e+07 and latency 3.119e+04 to outputs/2024-11-05 23:26:35.692004/Layer11_complete.json
+2024-11-05 23:27:02,170 - run +49 - INFO - Processing  Layer12...
+2024-11-05 23:27:02,170 - run +92 - INFO - Layer12: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 265.14it/s]
+2024-11-05 23:27:04,889 - run +48 - INFO - Saved CostModelEvaluation(Layer12, Core(0)) with energy 5.929e+07 and latency 1.175e+05 to outputs/2024-11-05 23:26:35.692004/Layer12_complete.json
+2024-11-05 23:27:04,973 - run +49 - INFO - Processing  Layer13...
+2024-11-05 23:27:04,973 - run +92 - INFO - Layer13: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 265.68it/s]
+2024-11-05 23:27:07,688 - run +48 - INFO - Saved CostModelEvaluation(Layer13, Core(0)) with energy 5.929e+07 and latency 1.175e+05 to outputs/2024-11-05 23:26:35.692004/Layer13_complete.json
+2024-11-05 23:27:07,794 - run +49 - INFO - Processing  Layer14...
+2024-11-05 23:27:07,795 - run +92 - INFO - Layer14: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 360/360 [00:00<00:00, 420.70it/s]
+2024-11-05 23:27:08,654 - run +48 - INFO - Saved CostModelEvaluation(Layer14, Core(0)) with energy 2.762e+07 and latency 3.119e+04 to outputs/2024-11-05 23:26:35.692004/Layer14_complete.json
+2024-11-05 23:27:08,741 - run +49 - INFO - Processing  Layer15...
+2024-11-05 23:27:08,742 - run +92 - INFO - Layer15: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:03<00:00, 223.56it/s]
+2024-11-05 23:27:11,966 - run +48 - INFO - Saved CostModelEvaluation(Layer15, Core(0)) with energy 5.347e+07 and latency 6.364e+04 to outputs/2024-11-05 23:26:35.692004/Layer15_complete.json
+2024-11-05 23:27:12,062 - run +49 - INFO - Processing  Layer17...
+2024-11-05 23:27:12,063 - run +92 - INFO - Layer17: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:03<00:00, 233.92it/s]
+2024-11-05 23:27:15,145 - run +48 - INFO - Saved CostModelEvaluation(Layer17, Core(0)) with energy 5.347e+07 and latency 6.364e+04 to outputs/2024-11-05 23:26:35.692004/Layer17_complete.json
+2024-11-05 23:27:15,236 - run +49 - INFO - Processing  Layer16...
+2024-11-05 23:27:15,236 - run +92 - INFO - Layer16: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 258.54it/s]
+2024-11-05 23:27:18,025 - run +48 - INFO - Saved CostModelEvaluation(Layer16, Core(0)) with energy 8.975e+07 and latency 1.207e+05 to outputs/2024-11-05 23:26:35.692004/Layer16_complete.json
+2024-11-05 23:27:18,108 - run +49 - INFO - Processing  Layer18...
+2024-11-05 23:27:18,109 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 256, OY: 14, OX: 14}. Removing C.
+2024-11-05 23:27:18,109 - run +92 - INFO - Layer18: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:01<00:00, 404.24it/s]
+2024-11-05 23:27:19,893 - run +48 - INFO - Saved CostModelEvaluation(Layer18, Core(0)) with energy 1.381e+07 and latency 1.551e+04 to outputs/2024-11-05 23:26:35.692004/Layer18_complete.json
+2024-11-05 23:27:19,989 - run +49 - INFO - Processing  Layer19...
+2024-11-05 23:27:19,989 - run +92 - INFO - Layer19: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 273.99it/s]
+2024-11-05 23:27:22,620 - run +48 - INFO - Saved CostModelEvaluation(Layer19, Core(0)) with energy 8.975e+07 and latency 1.207e+05 to outputs/2024-11-05 23:26:35.692004/Layer19_complete.json
+2024-11-05 23:27:22,704 - run +49 - INFO - Processing  Layer20...
+2024-11-05 23:27:22,705 - run +92 - INFO - Layer20: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 271.83it/s]
+2024-11-05 23:27:25,357 - run +48 - INFO - Saved CostModelEvaluation(Layer20, Core(0)) with energy 8.975e+07 and latency 1.207e+05 to outputs/2024-11-05 23:26:35.692004/Layer20_complete.json
+2024-11-05 23:27:25,452 - run +49 - INFO - Processing  Layer21...
+2024-11-05 23:27:25,453 - run +92 - INFO - Layer21: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:01<00:00, 407.42it/s]
+2024-11-05 23:27:27,224 - run +48 - INFO - Saved CostModelEvaluation(Layer21, Core(0)) with energy 1.381e+07 and latency 1.551e+04 to outputs/2024-11-05 23:26:35.692004/Layer21_complete.json
+2024-11-05 23:27:27,307 - run +49 - INFO - Processing  Layer22...
+2024-11-05 23:27:27,307 - run +92 - INFO - Layer22: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 264.46it/s]
+2024-11-05 23:27:30,033 - run +48 - INFO - Saved CostModelEvaluation(Layer22, Core(0)) with energy 1.246e+08 and latency 1.496e+05 to outputs/2024-11-05 23:26:35.692004/Layer22_complete.json
+2024-11-05 23:27:30,118 - run +49 - INFO - Processing  Layer24...
+2024-11-05 23:27:30,118 - run +92 - INFO - Layer24: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 268.86it/s]
+2024-11-05 23:27:32,800 - run +48 - INFO - Saved CostModelEvaluation(Layer24, Core(0)) with energy 1.246e+08 and latency 1.496e+05 to outputs/2024-11-05 23:26:35.692004/Layer24_complete.json
+2024-11-05 23:27:32,892 - run +49 - INFO - Processing  Layer23...
+2024-11-05 23:27:32,892 - run +92 - INFO - Layer23: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 256.00it/s]
+2024-11-05 23:27:35,708 - run +48 - INFO - Saved CostModelEvaluation(Layer23, Core(0)) with energy 2.408e+08 and latency 2.957e+05 to outputs/2024-11-05 23:26:35.692004/Layer23_complete.json
+2024-11-05 23:27:35,798 - run +49 - INFO - Processing  Layer25...
+2024-11-05 23:27:35,799 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 512, OY: 7, OX: 7}. Removing C.
+2024-11-05 23:27:35,799 - run +92 - INFO - Layer25: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 30/30 [00:00<00:00, 373.44it/s]
+2024-11-05 23:27:35,883 - run +48 - INFO - Saved CostModelEvaluation(Layer25, Core(0)) with energy 6.905e+06 and latency 7.673e+03 to outputs/2024-11-05 23:26:35.692004/Layer25_complete.json
+2024-11-05 23:27:35,978 - run +49 - INFO - Processing  Layer26...
+2024-11-05 23:27:35,979 - run +92 - INFO - Layer26: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 263.96it/s]
+2024-11-05 23:27:38,711 - run +48 - INFO - Saved CostModelEvaluation(Layer26, Core(0)) with energy 2.408e+08 and latency 2.957e+05 to outputs/2024-11-05 23:26:35.692004/Layer26_complete.json
+2024-11-05 23:27:38,801 - run +49 - INFO - Processing  Layer27...
+2024-11-05 23:27:38,802 - run +92 - INFO - Layer27: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 720/720 [00:02<00:00, 247.85it/s]
+2024-11-05 23:27:41,710 - run +48 - INFO - Saved CostModelEvaluation(Layer27, Core(0)) with energy 2.408e+08 and latency 2.957e+05 to outputs/2024-11-05 23:26:35.692004/Layer27_complete.json
+2024-11-05 23:27:41,801 - run +49 - INFO - Processing  Layer28...
+2024-11-05 23:27:41,802 - run +92 - INFO - Layer28: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 30/30 [00:00<00:00, 351.70it/s]
+2024-11-05 23:27:41,890 - run +48 - INFO - Saved CostModelEvaluation(Layer28, Core(0)) with energy 6.905e+06 and latency 7.673e+03 to outputs/2024-11-05 23:26:35.692004/Layer28_complete.json
+2024-11-05 23:27:41,984 - run +49 - INFO - Processing  Layer29...
+2024-11-05 23:27:41,984 - check_and_reduce +164 - WARNING - User provided spatial unrolling C is not defined in Loop Dimension Sizes {B: 1, G: 512, OY: 1, OX: 1, FX: 7, FY: 7}. Removing C.
+2024-11-05 23:27:41,985 - run +92 - INFO - Layer29: Launching spatial mapping 1/1 :{D1: {G: 32}, D2: {}}.
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 30/30 [00:00<00:00, 295.69it/s]
+2024-11-05 23:27:42,089 - run +48 - INFO - Saved CostModelEvaluation(Layer29, Core(0)) with energy 2.325e+06 and latency 3.859e+03 to outputs/2024-11-05 23:26:35.692004/Layer29_complete.json
+2024-11-05 23:27:42,184 - run +49 - INFO - Processing  Layer30...
+2024-11-05 23:27:42,184 - run +92 - INFO - Layer30: Launching spatial mapping 1/1 :{D1: {K: 32}, D2: {C: 32}}.
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████| 180/180 [00:00<00:00, 346.86it/s]
+2024-11-05 23:27:42,706 - run +48 - INFO - Saved CostModelEvaluation(Layer30, Core(0)) with energy 4.511e+07 and latency 6.368e+04 to outputs/2024-11-05 23:26:35.692004/Layer30_complete.json
+2024-11-05 23:27:42,791 - run +95 - INFO - Saved CumulativeCME with energy 2.611e+09 and latency 5.516e+06 to outputs/2024-11-05 23:26:35.692004/overall_simple.json
+2024-11-05 23:27:42,816 - run +150 - INFO - Saved pickled list of 31 CMEs to outputs/resnet-saved_list_of_cmes.pickle.
+Total network energy = 2.61e+09 pJ
+Total network latency = 5.52e+06 cycles
+Loop ordering for example_name_of_layer0
+==========================================================================
+Temporal Loops                     O            W            I            
+==========================================================================
+for K in [0, 2):                   sram_2MB     rf_128B      sram_2MB     
+--------------------------------------------------------------------------
+  for FY in [0, 7):                sram_2MB     rf_128B      sram_2MB     
+--------------------------------------------------------------------------
+    for FX in [0, 7):              sram_2MB     rf_128B      sram_2MB     
+--------------------------------------------------------------------------
+      for OY in [0, 112):          sram_2MB     rf_128B      sram_2MB     
+--------------------------------------------------------------------------
+        for OX in [0, 112):        sram_2MB     rf_128B      sram_2MB     
+--------------------------------------------------------------------------
+==========================================================================
+Spatial Loops                                                             
+==========================================================================
+          parfor K in [0, 32):                                            
+--------------------------------------------------------------------------
+          parfor C in [0, 3):                                             
+--------------------------------------------------------------------------
+
+(base) Edward@Edwards-MBPro zigzag % 
+

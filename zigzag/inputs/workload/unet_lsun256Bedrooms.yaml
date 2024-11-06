@@ -1,0 +1,22 @@
+- id: 0 # UNET starts with a fully connected layer that works on the time embedding
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 1000, 512, 1, 1, 1, 1]
+  operand_precision:
+    W: 4
+    I: 8
+    O: 12
+    O_final: 8
+  operand_source:
+    I: 0
+    W: 0
+
+# 1. then a SiLu layer on the time embedding
+
+# 2. a fully connected layer on the time embedding
+
+#now feed this time embedding into our resisual 'block' that consists of multiple conv layers, 
+# but feed it in using attention layer!
+

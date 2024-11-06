@@ -1,11 +1,11 @@
-- name: default
-  core_allocation: [1]
+- name: default # default is used if an Operator from the workload is not explicitly mapped in this file.
+  core_allocation: [1] # always [1] since only single-core for now
   spatial_mapping:
     D1:
       - K, 32
     D2:
       - C, 32
-  memory_operand_links:
+  memory_operand_links: # links the memory operands to the actual algorithmic operands
     O: O
     W: I2
     I: I1
@@ -38,7 +38,7 @@
   core_allocation: [1]
   spatial_mapping:
     D1:
-      - C, 32
+      - C, 32 # but C=3 input channels, so it cannot spatially unroll to 32?! -> WARNING message
     D2:
       - K, 32
   temporal_ordering:

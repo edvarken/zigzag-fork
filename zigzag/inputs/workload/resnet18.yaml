@@ -1,16 +1,16 @@
 - id: 0 # conv1 stride 2
-  name: example_name_of_layer0
+  name: example_name_of_layer0 # there exists a mapping for this layer in mapping/tpu_like.yaml
   operator_type: Conv
   equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
   dimension_relations: [ix=2*ox+1*fx, iy=2*oy+1*fy]
-  loop_dims: [B, K, C, OY, OX, FY, FX]
-  loop_sizes: [1, 64, 3, 112, 112, 7, 7]
+  loop_dims: [B, K, C, OY, OX, FY, FX] # This should not include dimensions defined in the dimension_relations.
+  loop_sizes: [1, 64, 3, 112, 112, 7, 7] # C=3 input channels
   operand_precision:
     W: 8
     I: 8
-    O: 16
-    O_final: 8
-  operand_source:
+    O: 16 # partial output precision
+    O_final: 8 # final output precision: does it use rounding or truncation?
+  operand_source: # The layer id the input operands of this layer originate from, should be set to the id of current layer if it doesn’t originate from prior layers.
     I: 0
     W: 0
 
@@ -22,7 +22,7 @@
   loop_sizes: [1, 64, 56, 56, 3, 3]
   operand_precision:
     I: 8
-    W: 0
+    W: 0 # we don't care about the weights, max pool just chooses the max value of patches of 3by3 of the input
     O: 16
     O_final: 8
   operand_source:

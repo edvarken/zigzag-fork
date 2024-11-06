@@ -1,0 +1,2168 @@
+## - initial time_mlp = SinusoidalPosEmb, nn.Linear, nn.GeLU, nn.Linear # time_dim = dim*4 = 256
+
+- id: 0 # init conv, stride 1, padding=3 around all four sides, with a kernel of 7x7 this means (input height, input width) = (output height, output width)
+  name: init_conv
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX] # This should not include dimensions defined in the dimension_relations.
+  loop_sizes: [1, 64, 3, 64, 64, 7, 7] # (OY, OX) = (64, 64) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 # partial output precision
+    O_final: 8 # final output precision: does it use rounding or truncation?
+  operand_source: # The layer id the input operands of this layer originate from, should be set to the id of current layer if it doesn’t originate from prior layers.
+    I: 0
+    W: 0
+# save this layer as r = x.clone() for later skip connection
+
+# downs0_ResnetBlock1: dim=64, dim_out=64
+- id: 1 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs0_ResnetBlock1_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3] # (OY, OX) = (64, 64) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 0
+    W: 1
+  # downs0_ResnetBlock1_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64) # 64 input channels are separated into 8 groups, each containing 64/8=8 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs0_ResnetBlock1_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs0_ResnetBlock1_block1_SiLU
+
+- id: 2 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs0_ResnetBlock1_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 1
+    W: 2
+  # downs0_ResnetBlock1_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs0_ResnetBlock1_block2_SiLU
+
+# downs0_ResnetBlock1_block2_SiLU_output + nn.Identity(x=input latent of downs0_ResnetBlock1):
+- id: 3 # Residual Addition of layer 0 (init_conv) and layer 2 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64] # G = 64 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 0
+    I: 2
+
+
+# downs0_ResnetBlock2: dim=64, dim_out=64
+- id: 4 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs0_ResnetBlock2_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3] # (OY, OX) = (64, 64) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 3
+    W: 4
+  # downs0_ResnetBlock2_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs0_ResnetBlock2_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs0_ResnetBlock2_block1_SiLU
+
+- id: 5 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs0_ResnetBlock2_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 4
+    W: 5
+  # downs0_ResnetBlock2_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs0_ResnetBlock2_block2_SiLU
+
+# downs0_ResnetBlock2_block2_SiLU_output + nn.Identity(x=input latent of downs0_ResnetBlock2):
+- id: 6 # Residual Addition of layer 3 (input of downs0_ResnetBlock2) and layer 5 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 3
+    I: 5
+
+# downs0_linearattentionblock:
+  # save current latent x for later residual connection
+  # downs0_LayerNorm(dim_in) # dim_in = 64
+  # LinearAttention(dim_in)): 
+      # 2a. b, c, h, w = x.shape (b=1, c=64, h=64, w=64)
+      # 2b. qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias=False).chunk(3, dim = 1): # hidden_dim=128, bias is TRUE by default, so here it is set to FALSE!, split in three 64x64 matrix CHUNKS each with hidden_dim channels
+- id: 7
+  name: downs0_linearattention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 64, 64, 64, 1, 1] # K = hidden_dim * 3
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 6
+    W: 7
+      # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv) # '1 (128=4*32) x=64 y=64 -> 1 4 32 (4096=x*y)'
+      # 2d. compute SoftMax along channel c dimension
+      # 2e. compute SoftMax along sequence length (x y)  dimension
+      # 2f. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+      # 2g. v = v / (h * w) # scale the values by heigth*width
+      # 2h. context = torch.einsum('b h d n, b h e n -> b h d e', k, v): # matrix matrix multiplication along 'n' dimension
+- id: 8 
+  name: downs0_linearattention_contextGemm # k and v are both matrices with size: torch.Size([1, 4, 32, 4096])
+  operator_type: Gemm
+  equation: O[b][h][d][e]+=W[b][h][d][n]*I[b][h][e][n]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=key-matrix channels, E=value-matrix channels, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 8 # I = values-matrix after chunking and rearranging of layer 7, so set to this layer's index instead..
+    W: 8 # W = keys-matrix after chunking and rearranging of layer 7, so set to this layer's index instead..
+      # 2i. out = torch.einsum('b h d e, b h d n -> b h e n', context, q) # matrix matrix multiplication along 'd' dimension
+- id: 9 
+  name: downs0_linearattention_outGemm # context: torch.Size([1, 4, 32, 32]), while q: torch.Size([1, 4, 32, 4096])
+  operator_type: Gemm
+  equation: O[b][h][e][n]+=W[b][h][d][e]*I[b][h][d][n] # out has shape [1, 4, 32, 4096]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=32, E=32, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 9 # I = queries-matrix after chunking and rearranging of layer 7, so set to this layer's index instead..
+    W: 8 # W = context-matrix computed in previous layer
+      # 2j. out = rearrange(out, 'b h c (x y) -> b (h c) x y', h = self.heads, x = h, y = w) # out now has shape back: [1, 128, 64, 64]
+      # 2k. to_out = nn.Sequential(nn.Conv2d(hidden_dim=dim_head * heads, dim, 1), LayerNorm(dim)) # hidden_dim=32*4=128, dim=64
+- id: 10
+  name: downs0_linearattention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 1, 1]  #K=64 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 9 # previous layer = out
+    W: 10
+  # return x + to_out # residual connection:
+- id: 11 # Residual Addition of layer 6 (input of downs0_linearattentionblock) and layer 10 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 6
+    I: 10
+
+# downs0_Downsample(dim_in, dim_out): # with (dim_in, dim_out) = (64, 64)
+  # 1. Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1 = 2, p2 = 2) # [1, 64 * 4, 64 / 2, 64 / 2]
+  # 2. nn.Conv2d(dim * 4, default(dim_out, dim), 1) # this is a 1x1 convolution to bring channels from dim*4 to dim_out if provided, else to dim.
+- id: 12
+  name: downs0_Downsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 256, 32, 32, 1, 1] # K=64 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 12 # previous layer 11 but after rearranging, so set to this layer's index instead..
+    W: 12
+
+
+
+# downs1_ResnetBlock1: dim=64, dim_out=64
+- id: 13 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs1_ResnetBlock1_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 32, 32, 3, 3] # (OY, OX) = (32, 32) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 12
+    W: 13
+  # downs1_ResnetBlock1_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64) # 64 input channels are separated into 8 groups, each containing 64/8=8 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs1_ResnetBlock1_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs1_ResnetBlock1_block1_SiLU
+
+- id: 14 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs1_ResnetBlock1_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 32, 32, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 13
+    W: 14
+  # downs1_ResnetBlock1_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs1_ResnetBlock1_block2_SiLU
+
+# downs1_ResnetBlock1_block2_SiLU_output + nn.Identity(x=input latent of downs1_ResnetBlock1):
+- id: 15 # Residual Addition of layer 12 (input latent of downs1_ResnetBlock1) and layer 14 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 32, 32] # G = 64 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 12
+    I: 14
+
+
+# downs1_ResnetBlock2: dim=64, dim_out=64
+- id: 16 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs1_ResnetBlock2_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 32, 32, 3, 3] # (OY, OX) = (32, 32) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 15
+    W: 16
+  # downs1_ResnetBlock2_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs1_ResnetBlock2_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs1_ResnetBlock2_block1_SiLU
+
+- id: 17 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs1_ResnetBlock2_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 32, 32, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 16
+    W: 17
+  # downs1_ResnetBlock2_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=64)
+  # downs1_ResnetBlock2_block2_SiLU
+
+# downs1_ResnetBlock2_block2_SiLU_output + nn.Identity(x=input latent of downs0_ResnetBlock2):
+- id: 18 # Residual Addition of layer 15 (input of downs1_ResnetBlock2) and layer 17 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 32, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 15
+    I: 17
+
+# downs1_linearattentionblock:
+  # save current latent x for later residual connection
+  # downs1_LayerNorm(dim_in) # dim_in = 64
+  # LinearAttention(dim_in)): 
+      # 2a. b, c, h, w = x.shape (b=1, c=64, h=32, w=32)
+      # 2b. qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias=False).chunk(3, dim = 1): # hidden_dim=128, bias is TRUE by default, so here it is set to FALSE!, split in three 32x32 matrix CHUNKS each with hidden_dim channels
+- id: 19
+  name: downs1_linearattention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 64, 32, 32, 1, 1] # K = hidden_dim * 3
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 18
+    W: 19
+      # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv) # '1 (128=4*32) x=32 y=32 -> 1 4 32 (1024=x*y)'
+      # 2d. compute SoftMax along channel c dimension
+      # 2e. compute SoftMax along sequence length (x y)  dimension
+      # 2f. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+      # 2g. v = v / (h * w) # scale the values by heigth*width
+      # 2h. context = torch.einsum('b h d n, b h e n -> b h d e', k, v): # matrix matrix multiplication along 'n' dimension
+- id: 20
+  name: downs1_linearattention_contextGemm # k and v are both matrices with size: torch.Size([1, 4, 32, 1024])
+  operator_type: Gemm
+  equation: O[b][h][d][e]+=W[b][h][d][n]*I[b][h][e][n]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=key-matrix channels, E=value-matrix channels, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 1024]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 20 # I = values-matrix after chunking and rearranging of layer 19, so set to this layer's index instead..
+    W: 20 # W = keys-matrix after chunking and rearranging of layer 19, so set to this layer's index instead..
+      # 2i. out = torch.einsum('b h d e, b h d n -> b h e n', context, q) # matrix matrix multiplication along 'd' dimension
+- id: 21
+  name: downs1_linearattention_outGemm # context: torch.Size([1, 4, 32, 32]), while q: torch.Size([1, 4, 32, 1024])
+  operator_type: Gemm
+  equation: O[b][h][e][n]+=W[b][h][d][e]*I[b][h][d][n] # out has shape [1, 4, 32, 1024]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=32, E=32, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 1024]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 21 # I = queries-matrix after chunking and rearranging of layer 19, so set to this layer's index instead..
+    W: 20 # W = context-matrix computed in previous layer
+      # 2j. out = rearrange(out, 'b h c (x y) -> b (h c) x y', h = self.heads, x = h, y = w) # out now has shape back: [1, 128, 32, 32]
+      # 2k. to_out = nn.Sequential(nn.Conv2d(hidden_dim=dim_head * heads, dim, 1), LayerNorm(dim)) # hidden_dim=32*4=128, dim=64
+- id: 22
+  name: downs1_linearattention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 32, 32, 1, 1]  #K=64 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 21 # previous layer = out
+    W: 22
+  # return x + to_out # residual connection:
+- id: 23 # Residual Addition of layer 18 (input of downs1_linearattentionblock) and layer 22 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 32, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 18
+    I: 22
+
+# downs1_Downsample(dim_in, dim_out): # with (dim_in, dim_out) = (64, 128)
+  # 1. Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1 = 2, p2 = 2) # [1, 64 * 4, 32 / 2, 32 / 2]
+  # 2. nn.Conv2d(dim * 4, default(dim_out, dim), 1) # this is a 1x1 convolution to bring channels from dim*4 to dim_out if provided, else to dim.
+- id: 24
+  name: downs1_Downsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 256, 16, 16, 1, 1] # K=128 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 24 # previous layer 23 but after rearranging, so set to this layer's index instead..
+    W: 24
+
+
+
+# downs2_ResnetBlock1: dim=128, dim_out=128
+- id: 25 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs2_ResnetBlock1_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 16, 16, 3, 3] # (OY, OX) = (16, 16) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 24
+    W: 25
+  # downs2_ResnetBlock1_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=128) # 128 input channels are separated into 8 groups, each containing 128/8=16 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs2_ResnetBlock1_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs2_ResnetBlock1_block1_SiLU
+
+- id: 26 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs2_ResnetBlock1_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 16, 16, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 25
+    W: 26
+  # downs2_ResnetBlock1_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=128)
+  # downs2_ResnetBlock1_block2_SiLU
+
+# downs2_ResnetBlock1_block2_SiLU_output + nn.Identity(x=input latent of downs2_ResnetBlock1):
+- id: 27 # Residual Addition of layer 24 (input latent of downs2_ResnetBlock1) and layer 26 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 16, 16] # G = 128 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 24
+    I: 26
+
+# downs2_ResnetBlock2: dim=128, dim_out=128
+- id: 28 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs2_ResnetBlock2_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 16, 16, 3, 3] # (OY, OX) = (16, 16) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 27
+    W: 28
+  # downs2_ResnetBlock2_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=128) # 128 input channels are separated into 8 groups, each containing 128/8=16 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs2_ResnetBlock2_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs2_ResnetBlock2_block1_SiLU
+
+- id: 29 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs2_ResnetBlock2_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 16, 16, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 28
+    W: 29
+  # downs2_ResnetBlock2_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=128)
+  # downs2_ResnetBlock2_block2_SiLU
+
+# downs2_ResnetBlock2_block2_SiLU_output + nn.Identity(x=input latent of downs2_ResnetBlock2):
+- id: 30 # Residual Addition of layer 27 (input latent of downs2_ResnetBlock2) and layer 29 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 16, 16] # G = 128 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 27
+    I: 29
+
+# downs2_attentionblock
+  # save current latent x for later residual connection
+  # downs2_LayerNorm(dim_in) # dim_in = 128
+  # Attention(dim_in): (only 1 softmax instead of 2)
+    # 2a. b, c, h, w = x.shape # (b=1, c=128, h=16, w=16)
+    # 2b. qkv = self.to_qkv(x).chunk(3, dim=1) with to_qkv() = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False) # split in three 16x16 matrix CHUNKS each with hidden_dim channels
+- id: 31
+  name: downs2_attention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 128, 16, 16, 1, 1] # K = hidden_dim * 3 = 384, C = 128
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 30
+    W: 31
+    # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+    # 2d. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+    # 2e. sim = einsum('b h d i, b h d j -> b h i j', q, k)
+- id: 32
+  name: downs2_attention_simGemm # q and k are both matrices with size: torch.Size([1, 4, 32, 256])
+  operator_type: Gemm
+  equation: O[b][h][i][j]+=W[b][h][d][i]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=q-matrix sequence length, J=k-matrix sequence length, D=channels)
+  loop_sizes: [1, 4, 256, 256, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 32 # I = k-matrix after chunking and rearranging of layer 31, so set to this layer's index instead..
+    W: 32 # W = q-matrix after chunking and rearranging of layer 31, so set to this layer's index instead..   
+
+    # 2f. attn = sim.softmax(dim=-1)
+    # 2g. out = einsum('b h i j, b h d j -> b h i d', attn, v)
+- id: 33
+  name: downs2_attention_outGemm # attn is torch.Size([1, 4, 256, 256]) and v is torch.Size([1, 4, 32, 256])
+  operator_type: Gemm
+  equation: O[b][h][i][d]+=W[b][h][i][j]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=attn-matrix sequence length, J=v-matrix sequence length, D=channels)
+  loop_sizes: [1, 4, 256, 256, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 33 # I = v-matrix after chunking and rearranging of layer 31, so set to this layer's index instead..
+    W: 32 # W = attn-matrix after softmax of layer 32, so we can set to this previous layer 32.  
+    # 2h. out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w) # out goes from [1, 4, 256, 32] to [1, 128, 16, 16]
+    # 2i. self.to_out(out) with to_out() = nn.Conv2d(hidden_dim, dim, 1):
+- id: 34
+  name: downs2_attention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 16, 16, 1, 1] # K=128 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 33 # previous layer = out
+    W: 34
+  # return x + to_out
+- id: 35 # Residual Addition of layer 30 (input of downs2_attentionblock) and layer 34 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 16, 16]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 30
+    I: 34
+
+# downs2_Downsample(dim_in, dim_out): # with (dim_in, dim_out) = (128, 256)
+  # 1. Rearrange('b c (h p1) (w p2) -> b (c p1 p2) h w', p1 = 2, p2 = 2) # [1, 128 * 4, 16 / 2, 16 / 2]
+  # 2. nn.Conv2d(dim * 4, default(dim_out, dim), 1) # this is a 1x1 convolution to bring channels from dim*4=128*4=512 to dim_out=256 if provided, else to dim.
+- id: 36
+  name: downs2_Downsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 512, 8, 8, 1, 1] # K=256 output channels, and OY=OX=8
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 36 # previous layer 35 but after rearranging, so set to this layer's index instead..
+    W: 36
+
+
+
+# downs3_ResnetBlock1: dim=256, dim_out=256
+- id: 37 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs3_ResnetBlock1_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 8, 8, 3, 3] # (OY, OX) = (8, 8) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 36
+    W: 37
+  # downs3_ResnetBlock1_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=256) # 256 input channels are separated into 8 groups, each containing 256/8=32 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs3_ResnetBlock1_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs3_ResnetBlock1_block1_SiLU
+
+- id: 38 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs3_ResnetBlock1_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 37
+    W: 38
+  # downs3_ResnetBlock1_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=256)
+  # downs3_ResnetBlock1_block2_SiLU
+
+# downs3_ResnetBlock1_block2_SiLU_output + nn.Identity(x=input latent of downs3_ResnetBlock1):
+- id: 39 # Residual Addition of layer 36 (input latent of downs3_ResnetBlock1) and layer 38 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 8, 8] # G = 256 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 36
+    I: 38
+
+# downs3_ResnetBlock2: dim=256, dim_out=256
+- id: 40 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs3_ResnetBlock2_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 8, 8, 3, 3] # (OY, OX) = (8, 8) same as input dimensions
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 39
+    W: 40
+  # downs3_ResnetBlock2_block1_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=256) # 256 input channels are separated into 8 groups, each containing 256/8=32 channels.
+  # (if num_groups=1, GroupNorm is equivalent to LayerNorm)
+  # downs3_ResnetBlock2_block1_scale_shift: x = x * (scale + 1) + shift
+  # downs3_ResnetBlock2_block1_SiLU
+
+- id: 41 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: downs3_ResnetBlock2_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 40
+    W: 41
+  # downs3_ResnetBlock2_block2_GroupNorm = nn.GroupNorm(num_groups= 8, num_channels= dim_out=256)
+  # downs3_ResnetBlock2_block2_SiLU
+
+# downs3_ResnetBlock2_block2_SiLU_output + nn.Identity(x=input latent of downs3_ResnetBlock2):
+- id: 42 # Residual Addition of layer 39 (input latent of downs3_ResnetBlock2) and layer 41 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 8, 8] # G = 256 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 39
+    I: 41
+
+# downs3_attentionblock=Residual(PreNorm(dim_in, Attention(dim_in))): # dim_in = 256    
+  # save current latent x for later residual connection
+  # downs3_LayerNorm(dim_in) # dim_in = 256
+  # Attention(dim_in): (only 1 softmax instead of 2)
+    # 2a. b, c, h, w = x.shape # (b=1, c=256, h=8, w=8)
+    # 2b. qkv = self.to_qkv(x).chunk(3, dim=1) with to_qkv() = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False) # split in three 8x8 matrix CHUNKS each with hidden_dim channels
+- id: 43
+  name: downs3_attention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 256, 8, 8, 1, 1] # K = hidden_dim * 3 = 384, C = 256
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 42
+    W: 43
+    # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+    # 2d. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+    # 2e. sim = einsum('b h d i, b h d j -> b h i j', q, k)
+- id: 44
+  name: downs3_attention_simGemm # q and k are both matrices with size: torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][j]+=W[b][h][d][i]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=q-matrix sequence length, J=k-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 44 # I = k-matrix after chunking and rearranging of layer 43, so set to this layer's index instead..
+    W: 44 # W = q-matrix after chunking and rearranging of layer 43, so set to this layer's index instead..     
+    # 2f. attn = sim.softmax(dim=-1)
+    # 2g. out = einsum('b h i j, b h d j -> b h i d', attn, v)
+- id: 45
+  name: downs3_attention_outGemm # attn is torch.Size([1, 4, 64, 64]) and v is torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][d]+=W[b][h][i][j]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=attn-matrix sequence length, J=v-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 45 # I = v-matrix after chunking and rearranging of layer 43, so set to this layer's index instead..
+    W: 44 # W = attn-matrix after softmax of layer 44, so we can set to this previous layer 44.     
+    # 2h. out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w)
+    # 2i. self.to_out(out) with to_out() = nn.Conv2d(hidden_dim, dim, 1) # hidden_dim=128, dim=256
+- id: 46
+  name: downs3_attention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 128, 8, 8, 1, 1] # K=256 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 45 # previous layer = out
+    W: 46
+
+  # return x + to_out
+- id: 47 # Residual Addition of layer 42 (input of downs3_attentionblock) and layer 46 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 8, 8] # G = 256 channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 42
+    I: 46
+
+# INSTEAD OF DOWNSAMPLE() JUST A FINAL 'DOWNSAMPLING' CONVOLUTION: WITHOUT DIVIDING HEIGHT/2 AND WIDTH/2, SO STAYS AT (8, 8) ! 
+# nn.Conv2d(dim_in, dim_out, 3, padding=1) # with (dim_in, dim_out) = (256, 512)
+- id: 48
+  name: downs3_Downsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 256, 8, 8, 3, 3] # K=512 output channels!!, OY and OX stay at 8 !!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 47
+    W: 48
+
+
+# mid_ResnetBlock1: dim=512, dim_out=512
+- id: 49 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: mid_ResnetBlock1_block1_WeightStandardizedConv2d # nn.Conv2d(dim, dim_out, 3, padding = 1): # dim = dim_out = 512
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 48
+    W: 49
+  # mid_ResnetBlock1_block1_GroupNorm
+  # mid_ResnetBlock1_block1_scale_shift (= time embedding): x = x * (scale + 1) + shift
+  # mid_ResnetBlock1_block1_SiLU
+
+- id: 50
+  name: mid_ResnetBlock1_block2_WeightStandardizedConv2d # nn.Conv2d(dim, dim_out, 3, padding = 1): # dim = dim_out = 512
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 49
+    W: 50
+  # mid_ResnetBlock1_block2_GroupNorm
+  # mid_ResnetBlock1_block2_SiLU
+
+  # mid_ResnetBlock1_block2_SiLU_output + nn.Identity(x= latent input of mid_ResnetBlock1)
+- id: 51 # Residual Addition of layer 48 (input latent of mid_ResnetBlock1) and layer 50 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 48
+    I: 50
+
+# mid_attentionblock:
+  # save current latent x for later residual connection
+  # mid_LayerNorm(mid_dim)
+  # Attention(mid_dim): only 1 softmax instead of 2
+    # 2a. b, c, h, w = x.shape # (b=1, c=512, h=8, w=8)
+    # 2b. qkv = self.to_qkv(x).chunk(3, dim=1) with to_qkv() = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False) # split in three 8x8 matrix CHUNKS each with hidden_dim channels
+- id: 52
+  name: mid_attention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 512, 8, 8, 1, 1] # K = hidden_dim * 3 = 384, C = 512
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 51
+    W: 52
+    # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+    # 2d. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+    # 2e. sim = einsum('b h d i, b h d j -> b h i j', q, k)
+- id: 53
+  name: mid_attention_simGemm # q and k are both matrices with size: torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][j]+=W[b][h][d][i]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=q-matrix sequence length, J=k-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 53 # I = k-matrix after chunking and rearranging of layer 52, so set to this layer's index instead..
+    W: 53 # W = q-matrix after chunking and rearranging of layer 52, so set to this layer's index instead..     
+    # 2f. attn = sim.softmax(dim=-1)
+    # 2g. out = einsum('b h i j, b h d j -> b h i d', attn, v)
+- id: 54
+  name: mid_attention_outGemm # attn is torch.Size([1, 4, 64, 64]) and v is torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][d]+=W[b][h][i][j]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=attn-matrix sequence length, J=v-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 54 # I = v-matrix after chunking and rearranging of layer 52, so set to this layer's index instead..
+    W: 53 # W = attn-matrix after softmax of layer 53, so we can set to this previous layer 53.   
+    # 2h. out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w)
+    # 2i. self.to_out(out) with to_out() = nn.Conv2d(hidden_dim, dim, 1) # hidden_dim=128, dim=512
+- id: 55
+  name: mid_attention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 128, 8, 8, 1, 1] # K=512 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 54 # previous layer = out
+    W: 55
+
+  # return x + to_out
+- id: 56 # Residual Addition of layer 51 (input of mid_attentionblock) and layer 55 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 51
+    I: 55
+
+
+# mid_ResnetBlock2: dim=512, dim_out=512
+- id: 57 # padding=1 around all four sides, with a kernel of 3x3 this means (input height, input width) = (output height, output width)
+  name: mid_ResnetBlock2_block1_WeightStandardizedConv2d # nn.Conv2d(dim, dim_out, 3, padding = 1): # dim = dim_out = 512
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 56
+    W: 57
+  # mid_ResnetBlock2_block1_GroupNorm
+  # mid_ResnetBlock2_block1_scale_shift (= time embedding): x = x * (scale + 1) + shift
+  # mid_ResnetBlock2_block1_SiLU
+- id: 58
+  name: mid_ResnetBlock2_block2_WeightStandardizedConv2d # nn.Conv2d(dim, dim_out, 3, padding = 1): # dim = dim_out = 512
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 57
+    W: 58
+  # mid_ResnetBlock2_block2_GroupNorm
+  # mid_ResnetBlock2_block2_SiLU
+  # mid_ResnetBlock2_block2_SiLU_output + nn.Identity(x= latent input of mid_ResnetBlock2)
+- id: 59 # Residual Addition of layer 56 (input latent of mid_ResnetBlock2) and layer 58 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 56
+    I: 58
+
+
+
+# in the following self.ups block_klasses, the in/out dimensions are not the same, so each ResNetblock will have an additional res_conv happening after block2, before the residual connection.
+# (dim_out+dim_in, dim_out)=[(512+256, 512), (256+128, 256), (128+64, 128), (64+64, 64)]
+
+# ups0_ResnetBlock1: (512 channels from main path) + (output of downs3_attentionblock with 256 channels), dim_out=512 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups0_ResnetBlock1_block1_WeightStandardizedConv2d
+- id: 60
+  name: ups0_ResnetBlock1_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 768, 8, 8, 3, 3] # 3x3 kernel
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 59
+    W: 60
+  # ups0_ResnetBlock1_block1_GroupNorm
+  # ups0_ResnetBlock1_block1_scale_shift
+  # ups0_ResnetBlock1_block1_SiLU
+  # ups0_ResnetBlock1_block2_WeightStandardizedConv2d
+- id: 61
+  name: ups0_ResnetBlock1_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 60
+    W: 61
+  # ups0_ResnetBlock1_block2_GroupNorm
+  # ups0_ResnetBlock1_block2_SiLU
+  # ups0_ResnetBlock1_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 59= input_latent of ups0_ResnetBlock1) # with dim=768 and dim_out=512
+- id: 62
+  name: ups0_ResnetBlock1_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 768, 8, 8, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 59
+    W: 62
+- id: 63 # Residual Addition of layer 62 (residual_conv of input of ups0_ResnetBlock1) and layer 61 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 62
+    I: 61
+
+# ups0_ResnetBlock2: (512 channels from main path) + (output of downs3_ResnetBlock1_block2 with 256 channels), dim_out=512 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups0_ResnetBlock2_block1_WeightStandardizedConv2d
+- id: 64
+  name: ups0_ResnetBlock2_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 768, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 63
+    W: 64
+  # ups0_ResnetBlock2_block1_GroupNorm
+  # ups0_ResnetBlock2_block1_scale_shift
+  # ups0_ResnetBlock2_block1_SiLU
+  # ups0_ResnetBlock2_block2_WeightStandardizedConv2d
+- id: 65
+  name: ups0_ResnetBlock2_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 512, 8, 8, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 64
+    W: 65
+  # ups0_ResnetBlock2_block2_GroupNorm
+  # ups0_ResnetBlock2_block2_SiLU
+  # ups0_ResnetBlock2_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 63 = input_latent of ups0_ResnetBlock2) # with dim=768 and dim_out=512
+- id: 66
+  name: ups0_ResnetBlock2_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 768, 8, 8, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 63
+    W: 66
+- id: 67 # Residual Addition of layer 66 (residual_conv of input of ups0_ResnetBlock2) and layer 65 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 66
+    I: 65
+
+
+# ups0_attentionblock: # dim_out = 512
+  # save current latent x for later residual connection
+  # ups0_LayerNorm(dim_out)
+  # Attention(dim_out): only 1 softmax instead of 2
+    # 2a. b, c, h, w = x.shape # (b=1, c=512, h=8, w=8)
+    # 2b. qkv = self.to_qkv(x).chunk(3, dim=1) with to_qkv() = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False) # split in three 8x8 matrix CHUNKS each with hidden_dim channels
+- id: 68
+  name: ups0_attention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 512, 8, 8, 1, 1] # K = hidden_dim * 3 = 384, C = 512
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 67
+    W: 68
+    # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+    # 2d. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+    # 2e. sim = einsum('b h d i, b h d j -> b h i j', q, k)
+- id: 69
+  name: ups0_attention_simGemm # q and k are both matrices with size: torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][j]+=W[b][h][d][i]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=q-matrix sequence length, J=k-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 69 # I = k-matrix after chunking and rearranging of layer 68, so set to this layer's index instead..
+    W: 69 # W = q-matrix after chunking and rearranging of layer 68, so set to this layer's index instead..     
+    # 2f. attn = sim.softmax(dim=-1)
+    # 2g. out = einsum('b h i j, b h d j -> b h i d', attn, v)
+- id: 70
+  name: ups0_attention_outGemm # attn is torch.Size([1, 4, 64, 64]) and v is torch.Size([1, 4, 32, 64])
+  operator_type: Gemm
+  equation: O[b][h][i][d]+=W[b][h][i][j]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=attn-matrix sequence length, J=v-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 64, 64, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 70 # I = v-matrix after chunking and rearranging of layer 68, so set to this layer's index instead..
+    W: 69 # W = attn-matrix after softmax of layer 53, so we can set to this previous layer 69.   
+    # 2h. out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w)
+    # 2i. self.to_out(out) with to_out() = nn.Conv2d(hidden_dim, dim, 1) # hidden_dim=128, dim=512
+- id: 71
+  name: ups0_attention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 512, 128, 8, 8, 1, 1] # K=512 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 70 # previous layer = out
+    W: 71
+  # return x + to_out
+- id: 72 # Residual Addition of layer 67 (input of ups0_attentionblock) and layer 71 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 512, 8, 8] # G = 512 channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 67
+    I: 71
+
+# ups0_Upsample(dim_out, dim_in): dim_out=512, dim_in=256
+  # 1. nn.Upsample(scale_factor=2, mode='nearest') # LATENT becomes (batch_size=1, channels=512, heigh=16, width=16)
+  # 2. nn.Conv2d(dim, default(dim_out, dim), 3, padding = 1) # with (dim, dim_out) = (512, 256) # dim_out becomes = dim, while dim_in becomes = dim_out
+- id: 73
+  name: ups0_upsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 512, 16, 16, 3, 3] # latent becomes torch.Size([1, 256, 16, 16])
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 72
+    W: 73
+
+
+
+# ups1_ResnetBlock1: (256 channels from main path) + (output of downs2_attentionblock with 128 channels), dim_out=256 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups1_ResnetBlock1_block1_WeightStandardizedConv2d
+- id: 74
+  name: ups1_ResnetBlock1_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 384, 16, 16, 3, 3] # 3x3 kernel
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 73
+    W: 74
+  # ups1_ResnetBlock1_block1_GroupNorm
+  # ups1_ResnetBlock1_block1_scale_shift
+  # ups1_ResnetBlock1_block1_SiLU
+  # ups1_ResnetBlock1_block2_WeightStandardizedConv2d
+- id: 75
+  name: ups1_ResnetBlock1_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 16, 16, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 74
+    W: 75
+  # ups1_ResnetBlock1_block2_GroupNorm
+  # ups1_ResnetBlock1_block2_SiLU
+  # ups1_ResnetBlock1_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 73= input_latent of ups1_ResnetBlock1) # with dim=384 and dim_out=256
+- id: 76
+  name: ups1_ResnetBlock1_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 384, 16, 16, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 73
+    W: 76
+- id: 77 # Residual Addition of layer 76 (residual_conv of input of ups1_ResnetBlock1) and layer 75 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 16, 16] # G = 256 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 76
+    I: 75
+
+# ups1_ResnetBlock2: (256 channels from main path) + (output of downs2_ResnetBlock1_block2 with 128 channels), dim_out=256 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups1_ResnetBlock2_block1_WeightStandardizedConv2d:
+- id: 78
+  name: ups1_ResnetBlock2_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 384, 16, 16, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 77
+    W: 78
+  # ups1_ResnetBlock2_block1_GroupNorm
+  # ups1_ResnetBlock2_block1_scale_shift
+  # ups1_ResnetBlock2_block1_SiLU
+  # ups1_ResnetBlock2_block2_WeightStandardizedConv2d:
+- id: 79
+  name: ups1_ResnetBlock2_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 256, 16, 16, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 78
+    W: 79
+  # ups1_ResnetBlock2_block2_GroupNorm
+  # ups1_ResnetBlock2_block2_SiLU
+  # ups1_ResnetBlock2_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 77 = input_latent of ups1_ResnetBlock2) # with dim=384 and dim_out=256
+- id: 80
+  name: ups1_ResnetBlock2_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 384, 16, 16, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 77
+    W: 80
+- id: 81 # Residual Addition of layer 80 (residual_conv of input of ups1_ResnetBlock2) and layer 79 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 16, 16] # G = 256 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 80
+    I: 79
+
+
+
+# ups1_attentionblock: # dim_out = 256
+  # save current latent x for later residual connection
+  # ups1_LayerNorm(dim_out)
+  # Attention(dim_out): only 1 softmax instead of 2
+    # 2a. b, c, h, w = x.shape # (b=1, c=256, h=16, w=16)
+    # 2b. qkv = self.to_qkv(x).chunk(3, dim=1) with to_qkv() = nn.Conv2d(dim, hidden_dim * 3, 1, bias = False) # split in three 16x16 matrix CHUNKS each with hidden_dim channels
+- id: 82
+  name: ups1_attention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 256, 16, 16, 1, 1] # K = hidden_dim * 3 = 384, C = 256
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 81
+    W: 82
+    # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv)
+    # 2d. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+    # 2e. sim = einsum('b h d i, b h d j -> b h i j', q, k)
+- id: 83
+  name: ups1_attention_simGemm # q and k are both matrices with size: torch.Size([1, 4, 32, 256])
+  operator_type: Gemm
+  equation: O[b][h][i][j]+=W[b][h][d][i]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=q-matrix sequence length, J=k-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 256, 256, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 83 # I = k-matrix after chunking and rearranging of layer 82, so set to this layer's index instead..
+    W: 83 # W = q-matrix after chunking and rearranging of layer 82, so set to this layer's index instead..     
+    # 2f. attn = sim.softmax(dim=-1)
+    # 2g. out = einsum('b h i j, b h d j -> b h i d', attn, v)
+- id: 84
+  name: ups1_attention_outGemm # attn is torch.Size([1, 4, 256, 256]) and v is torch.Size([1, 4, 32, 256])
+  operator_type: Gemm
+  equation: O[b][h][i][d]+=W[b][h][i][j]*I[b][h][d][j]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, I, J, D] # (B=batch_size, H=heads, I=attn-matrix sequence length, J=v-matrix sequence length, D=channels=32 always)
+  loop_sizes: [1, 4, 256, 256, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 84 # I = v-matrix after chunking and rearranging of layer 82, so set to this layer's index instead..
+    W: 83 # W = attn-matrix after softmax of layer 83, so we can set to this previous layer 83.   
+    # 2h. out = rearrange(out, 'b h (x y) d -> b (h d) x y', x = h, y = w)
+    # 2i. self.to_out(out) with to_out() = nn.Conv2d(hidden_dim, dim, 1) # hidden_dim=128, dim=256
+- id: 85
+  name: ups1_attention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 256, 128, 16, 16, 1, 1] # K=256 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 84 # previous layer = out
+    W: 85
+  # return x + to_out
+- id: 86 # Residual Addition of layer 81 (input of ups1_attentionblock) and layer 85 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 256, 16, 16] # G = 256 channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 81
+    I: 85
+
+# ups1_Upsample(dim_out, dim_in): dim_out=256, dim_in=128
+  # 1. nn.Upsample(scale_factor=2, mode='nearest') # LATENT becomes (batch_size=1, channels=256, heigh=32, width=32)
+  # 2. nn.Conv2d(dim, default(dim_out, dim), 3, padding = 1) # with (dim, dim_out) = (256, 128) # dim_out becomes = dim, while dim_in becomes = dim_out
+- id: 87
+  name: ups1_upsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 256, 32, 32, 3, 3] # latent becomes torch.Size([1, 128, 32, 32])
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 86
+    W: 87
+
+
+
+# ups2_ResnetBlock1: (128 channels from main path) + (output of downs1_attentionblock with 64 channels), dim_out=128 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups2_ResnetBlock1_block1_WeightStandardizedConv2d
+- id: 88
+  name: ups2_ResnetBlock1_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 192, 32, 32, 3, 3] # 3x3 kernel
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 87
+    W: 88
+  # ups2_ResnetBlock1_block1_GroupNorm
+  # ups2_ResnetBlock1_block1_scale_shift
+  # ups2_ResnetBlock1_block1_SiLU
+  # ups2_ResnetBlock1_block2_WeightStandardizedConv2d
+- id: 89
+  name: ups2_ResnetBlock1_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 32, 32, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 88
+    W: 89
+  # ups2_ResnetBlock1_block2_GroupNorm
+  # ups2_ResnetBlock1_block2_SiLU
+  # ups2_ResnetBlock1_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 87= input_latent of ups2_ResnetBlock1) # with dim=192 and dim_out=128
+- id: 90
+  name: ups2_ResnetBlock1_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 192, 32, 32, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 87
+    W: 90
+- id: 91 # Residual Addition of layer 90 (residual_conv of input of ups1_ResnetBlock1) and layer 89 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 32, 32] # G = 128 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 90
+    I: 89
+
+# ups2_ResnetBlock2: (128 channels from main path) + (output of downs1_ResnetBlock1_block2 with 64 channels), dim_out=128 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups2_ResnetBlock2_block1_WeightStandardizedConv2d:
+- id: 92
+  name: ups2_ResnetBlock2_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 192, 32, 32, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 91
+    W: 92
+  # ups2_ResnetBlock2_block1_GroupNorm
+  # ups2_ResnetBlock2_block1_scale_shift
+  # ups2_ResnetBlock2_block1_SiLU
+  # ups2_ResnetBlock2_block2_WeightStandardizedConv2d:
+- id: 93
+  name: ups2_ResnetBlock2_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 32, 32, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 92
+    W: 93
+  # ups2_ResnetBlock2_block2_GroupNorm
+  # ups2_ResnetBlock2_block2_SiLU
+  # ups2_ResnetBlock2_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 91 = input_latent of ups2_ResnetBlock2) # with dim=192 and dim_out=128
+- id: 94
+  name: ups1_ResnetBlock2_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 192, 32, 32, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 91
+    W: 94
+- id: 95 # Residual Addition of layer 94 (residual_conv of input of ups2_ResnetBlock2) and layer 93 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 32, 32] # G = 128 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 94
+    I: 93
+
+
+# ups2_linearattentionblock:
+  # save current latent x for later residual connection
+  # ups2_LayerNorm(dim_out) # dim_out = 128
+  # LinearAttention(dim_out)): 
+    # 2a. b, c, h, w = x.shape (b=1, c=128, h=32, w=32)
+    # 2b. qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias=False).chunk(3, dim = 1): # hidden_dim=128, bias is TRUE by default, so here it is set to FALSE!, split in three 32x32 matrix CHUNKS each with hidden_dim channels
+- id: 96
+  name: ups2_linearattention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 128, 32, 32, 1, 1] # K = hidden_dim * 3
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 95
+    W: 96
+      # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv) # '1 (128=4*32) x=32 y=32 -> 1 4 32 (1024=x*y)'
+      # 2d. compute SoftMax along channel c dimension
+      # 2e. compute SoftMax along sequence length (x y)  dimension
+      # 2f. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+      # 2g. v = v / (h * w) # scale the values by heigth*width
+      # 2h. context = torch.einsum('b h d n, b h e n -> b h d e', k, v): # matrix matrix multiplication along 'n' dimension
+- id: 97
+  name: ups2_linearattention_contextGemm # k and v are both matrices with size: torch.Size([1, 4, 32, 1024])
+  operator_type: Gemm
+  equation: O[b][h][d][e]+=W[b][h][d][n]*I[b][h][e][n]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=key-matrix channels, E=value-matrix channels, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 1024]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 97 # I = values-matrix after chunking and rearranging of layer 96, so set to this layer's index instead..
+    W: 97 # W = keys-matrix after chunking and rearranging of layer 96, so set to this layer's index instead..
+      # 2i. out = torch.einsum('b h d e, b h d n -> b h e n', context, q) # matrix matrix multiplication along 'd' dimension
+- id: 98
+  name: ups2_linearattention_outGemm # context: torch.Size([1, 4, 32, 32]), while q: torch.Size([1, 4, 32, 1024])
+  operator_type: Gemm
+  equation: O[b][h][e][n]+=W[b][h][d][e]*I[b][h][d][n] # out has shape [1, 4, 32, 1024]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=32, E=32, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 1024]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 98 # I = queries-matrix after chunking and rearranging of layer 96, so set to this layer's index instead..
+    W: 97 # W = context-matrix computed in previous layer
+      # 2j. out = rearrange(out, 'b h c (x y) -> b (h c) x y', h = self.heads, x = h, y = w) # out now has shape back: [1, 128, 32, 32]
+      # 2k. to_out = nn.Sequential(nn.Conv2d(hidden_dim=dim_head * heads, dim, 1), LayerNorm(dim)) # hidden_dim=32*4=128, dim=128
+- id: 99
+  name: ups2_linearattention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 128, 128, 32, 32, 1, 1]  #K=128 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 98 # previous layer = out
+    W: 99
+  # return x + to_out # residual connection:
+- id: 100 # Residual Addition of layer 95 (input of ups2_linearattentionblock) and layer 99 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 128, 32, 32]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 95
+    I: 99
+
+# ups2_Upsample(dim_out, dim_in): dim_out=128, dim_in=64 
+  # 1. nn.Upsample(scale_factor=2, mode='nearest') # LATENT becomes (batch_size=1, channels=128, heigh=64, width=64)
+  # 2. nn.Conv2d(dim, default(dim_out, dim), 3, padding = 1) # with (dim, dim_out) = (128, 64) # dim_out becomes = dim, while dim_in becomes = dim_out
+- id: 101
+  name: ups2_upsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 3, 3] # latent becomes torch.Size([1, 64, 64, 64])
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 100
+    W: 101
+
+
+
+# ups3_ResnetBlock1: (64 channels from main path) + (output of downs0_attentionblock with 64 channels), dim_out=64 # this is a long skip connection: x = torch.cat((x, h.pop()), dim=1), NOT AN ADDITION but a CONCATENATION
+  # ups3_ResnetBlock1_block1_WeightStandardizedConv2d:
+- id: 102
+  name: ups3_ResnetBlock1_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 3, 3] # 3x3 kernel
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 101
+    W: 102
+  # ups3_ResnetBlock1_block1_GroupNorm
+  # ups3_ResnetBlock1_block1_scale_shift
+  # ups3_ResnetBlock1_block1_SiLU
+  # ups3_ResnetBlock1_block2_WeightStandardizedConv2d:
+- id: 103
+  name: ups3_ResnetBlock1_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 102
+    W: 103
+  # ups3_ResnetBlock1_block2_GroupNorm
+  # ups3_ResnetBlock1_block2_SiLU
+  # ups3_ResnetBlock1_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 101= input_latent of ups3_ResnetBlock1) # with dim=128 and dim_out=64
+- id: 104
+  name: ups3_ResnetBlock1_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 101
+    W: 104
+- id: 105 # Residual Addition of layer 104 (residual_conv of input of ups3_ResnetBlock1) and layer 103 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64] # G = 64 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 104
+    I: 103
+
+
+# ups3_ResnetBlock2: dim = 64+64=128, dim_out=64
+  # ups3_ResnetBlock2_block1_WeightStandardizedConv2d:
+- id: 106
+  name: ups3_ResnetBlock2_block1_WeightStandardizedConv2d # nn.Conv2d(dim_out+dim_in, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 3, 3] # 3x3 kernel
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 105
+    W: 106
+  # ups3_ResnetBlock2_block1_GroupNorm
+  # ups3_ResnetBlock2_block1_scale_shift
+  # ups3_ResnetBlock2_block1_SiLU
+  # ups3_ResnetBlock2_block2_WeightStandardizedConv2d:
+- id: 107
+  name: ups3_ResnetBlock2_block2_WeightStandardizedConv2d # nn.Conv2d(dim_out, dim_out, 3, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 106
+    W: 107
+  # ups3_ResnetBlock2_block2_GroupNorm
+  # ups3_ResnetBlock2_block2_SiLU
+  # ups3_ResnetBlock2_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 105= input_latent of ups3_ResnetBlock2) # with dim=128 and dim_out=64
+- id: 108
+  name: ups3_ResnetBlock2_block2_residual_conv # nn.Conv2d(dim_out+dim_in, dim_out, 1, padding = 1):
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 105
+    W: 108
+- id: 109 # Residual Addition of layer 108 (residual_conv of input of ups3_ResnetBlock2) and layer 107 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64] # G = 64 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 108
+    I: 107
+
+
+# ups3_linearattentionblock:
+  # save current latent x for later residual connection
+  # ups2_LayerNorm(dim_out) # dim_out = 64
+  # LinearAttention(dim_out)): 
+    # 2a. b, c, h, w = x.shape (b=1, c=64, h=64, w=64)
+    # 2b. qkv = nn.Conv2d(dim, hidden_dim * 3, 1, bias=False).chunk(3, dim = 1): # hidden_dim=128, bias is TRUE by default, so here it is set to FALSE!, split in three 64x64 matrix CHUNKS each with hidden_dim channels
+- id: 110
+  name: ups3_linearattention_qkvConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 384, 64, 64, 64, 1, 1] # K = hidden_dim * 3
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 109
+    W: 110
+      # 2c. q, k, v = map(lambda t: rearrange(t, 'b (h c) x y -> b h c (x y)', h = self.heads), qkv) # '1 (128=4*32) x=64 y=64 -> 1 4 32 (4096=x*y)'
+      # 2d. compute SoftMax along channel c dimension
+      # 2e. compute SoftMax along sequence length (x y)  dimension
+      # 2f. q = q * self.scale # scale the queries by 1/sqrt(dim_head)
+      # 2g. v = v / (h * w) # scale the values by heigth*width
+      # 2h. context = torch.einsum('b h d n, b h e n -> b h d e', k, v): # matrix matrix multiplication along 'n' dimension
+- id: 111
+  name: ups3_linearattention_contextGemm # k and v are both matrices with size: torch.Size([1, 4, 32, 4096])
+  operator_type: Gemm
+  equation: O[b][h][d][e]+=W[b][h][d][n]*I[b][h][e][n]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=key-matrix channels, E=value-matrix channels, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 111 # I = values-matrix after chunking and rearranging of layer 110, so set to this layer's index instead..
+    W: 111 # W = keys-matrix after chunking and rearranging of layer 110, so set to this layer's index instead..
+      # 2i. out = torch.einsum('b h d e, b h d n -> b h e n', context, q) # matrix matrix multiplication along 'd' dimension
+- id: 112
+  name: ups3_linearattention_outGemm # context: torch.Size([1, 4, 32, 32]), while q: torch.Size([1, 4, 32, 4096])
+  operator_type: Gemm
+  equation: O[b][h][e][n]+=W[b][h][d][e]*I[b][h][d][n] # out has shape [1, 4, 32, 4096]
+  # dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, H, D, E, N] # (B=batch_size, H=heads, D=32, E=32, N=sequence length)
+  loop_sizes: [1, 4, 32, 32, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 112 # I = queries-matrix after chunking and rearranging of layer 110, so set to this layer's index instead..
+    W: 111 # W = context-matrix computed in previous layer
+      # 2j. out = rearrange(out, 'b h c (x y) -> b (h c) x y', h = self.heads, x = h, y = w) # out now has shape back: [1, 128, 64, 64]
+      # 2k. to_out = nn.Sequential(nn.Conv2d(hidden_dim=dim_head * heads, dim, 1), LayerNorm(dim)) # hidden_dim=32*4=128, dim=64
+- id: 113
+  name: ups3_linearattention_to_outConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 1, 1]  #K=64 output channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 113 # previous layer = out
+    W: 113
+  # return x + to_out # residual connection:
+- id: 114 # Residual Addition of layer 109 (input of ups3_linearattentionblock) and layer 113 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 109
+    I: 113
+
+# INSTEAD OF UPSAMPLE() JUST A FINAL 'UPSAMPLING' CONVOLUTION: 
+# nn.Conv2d(dim_out, dim_in, 3, padding=1) # with (dim_out, dim_in) = (64, 64)
+- id: 115
+  name: ups3_upsample_Conv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3] # latent becomes torch.Size([1, 64, 64, 64])
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 114
+    W: 115
+
+
+
+# x = torch.cat((x, r), dim=1) # concatenate the resulting latent x coming out of the UNET with r = which is a clone from the beginning just after the first init_conv along first dimension, giving 64*2 channels
+
+# final_res_block(x, t) = block_klass(dim * 2, dim, time_emb_dim=time_dim)# do a final residual block on this with dim= 64: so goes from 64*2 channels back to 64.
+# final_ResnetBlock:
+# final_ResnetBlock_block1_WeightStandardizedConv2d(dim=64*2, dim_out=64, 3, padding = 1)
+- id: 116
+  name: final_ResnetBlock_block1_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 116 # use current layer's id since a concatenation of layer 115(main path) and layer 0(init_conv) happened.
+    W: 116
+  # final_ResnetBlock_block1_GroupNorm
+  # final_ResnetBlock_block1_scale_shift
+  # final_ResnetBlock_block1_SiLU
+# final_ResnetBlock_block2_WeightStandardizedConv2d(dim=64, dim_out=64, 3, padding = 1)
+- id: 117
+  name: final_ResnetBlock_block2_WeightStandardizedConv2d
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 64, 64, 64, 3, 3]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 116 
+    W: 117
+    # final_ResnetBlock_block2_GroupNorm
+    # final_ResnetBlock_block2_SiLU
+# final_ResnetBlock_block2_SiLU_output + Conv2d(dim, dim_out, 1)(layer 115= input_latent of final_ResnetBlock)
+- id: 118
+  name: final_ResnetBlock_block2_residual_conv # nn.Conv2d(dim=64*2, dim_out=64, 1)
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 64, 128, 64, 64, 1, 1] # a 1x1 kernel instead of 3x3!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 115
+    W: 118
+- id: 119 # Residual Addition of layer 118 (residual_conv of input of final_ResnetBlock2) and layer 117 (main path)
+  operator_type: Add
+  equation: O[b][g][oy][ox]=W[b][g][oy][ox]+I[b][g][oy][ox]
+  loop_dims: [B, G, OY, OX]
+  loop_sizes: [1, 64, 64, 64] # G = 64 = channels
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16
+    O_final: 8
+  operand_source:
+    W: 118
+    I: 117
+
+
+
+# final_conv = nn.Conv2d(dim, out_dim, 1) # final convolution with dim=64 and out_dim = output channels = latents.shape[1] = 3
+- id: 120
+  name: final_conv
+  operator_type: Conv
+  equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [B, K, C, OY, OX, FY, FX]
+  loop_sizes: [1, 3, 64, 64, 64, 1, 1] # a 1x1 kernel # K=3 output channels!
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 119
+    W: 120
