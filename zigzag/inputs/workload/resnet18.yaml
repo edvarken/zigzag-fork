@@ -2,7 +2,7 @@
   name: example_name_of_layer0 # there exists a mapping for this layer in mapping/tpu_like.yaml
   operator_type: Conv
   equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
-  dimension_relations: [ix=2*ox+1*fx, iy=2*oy+1*fy]
+  dimension_relations: [ix=2*ox+1*fx, iy=2*oy+1*fy] # stride 2, so input size was 224x224 !
   loop_dims: [B, K, C, OY, OX, FY, FX] # This should not include dimensions defined in the dimension_relations.
   loop_sizes: [1, 64, 3, 112, 112, 7, 7] # C=3 input channels
   operand_precision:
@@ -148,7 +148,7 @@
     W: 9
 
 - id: 10 # conv downsample of layer 7
-  operator_type: Conv_downsample
+  operator_type: Conv_downsample # stride 2, actually the same as layer8
   equation: O[b][k][oy][ox]+=W[k][c][fy][fx]*I[b][c][iy][ix]
   dimension_relations: [ix=2*ox+1*fx, iy=2*oy+1*fy]
   loop_dims: [B, K, C, OY, OX, FY, FX]

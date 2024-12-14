@@ -3,36 +3,36 @@
     D1:
       - K, 32
     D2:
-      - C, 2
+      - C, 2 # I think here the mixing of  C, FX and FY happens accross D2
       - FX, 3
       - FY, 3
-  spatial_mapping_hint:
+  spatial_mapping_hint: # -> what does this hint mean?
     D1: [K]
     D2: [C, FX, FY]
-    D3: [K, OX]
-    D4: [OX, OY]
+    D3: [K, OX] # what is D3 here? I thought there were only 32x32 MACs available in the TPU
+    D4: [OX, OY] # what is D4 here? are there 32x32xD3xD4 MACs available or what?
   memory_operand_links:
     O: O
     W: I2
     I: I1
 
-- name: Add
+- name: Add # for the Add op.
   spatial_mapping:
     D1:
-      - G, 32
+      - G, 32 # parallellize (parfor) the G dimension(=channels) accross 32 MACs in D1 dimension
     D2:
-      - C, 1
+      - C, 1 # map the C dimension only accross 1 row of D2. (but there is no C dimension in ADD operation?)
   memory_operand_links:
     O: O
     W: I2
     I: I1
 
-- name: Pooling
+- name: Pooling # for the Pooling op.
   spatial_mapping:
     D1:
       - G, 32
     D2:
-      - C, 1
+      - C, 1 # there is no C dimension in a pooling operation?
   memory_operand_links:
     O: O
     W: I2

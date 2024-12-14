@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 - name: default # default is used if an Operator from the workload is not explicitly mapped in this file.
   core_allocation: [1] # always [1] since only single-core for now
-=======
-- name: default
->>>>>>> 35b37696231bb23831f8032f81d536127e6a62a8
   spatial_mapping:
     D1:
       - K, 32
