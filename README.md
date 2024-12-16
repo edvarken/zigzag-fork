@@ -1,6 +1,11 @@
 # push to my own fork
 git push zigzag-fork
 
+# run zigzag for UNET
+python UNET_main.py --model UNETGeMM512x512 --accel UNET_ConvGeMM_accelerator --mapping UNET_ConvGeMM_mapping
+
+
+
 # 🌀 ZigZag Tutorial Series
 
 Welcome to the ZigZag tutorial series! This series of labs will guide you through the key concepts and functionalities of the ZigZag framework for HW Architecture-Mapping Design Space Exploration (DSE) for Deep Learning (DL) accelerators.
