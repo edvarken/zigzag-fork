@@ -1,3 +1,6 @@
+# push to my own fork
+git push zigzag-fork
+
 # 🌀 ZigZag Tutorial Series
 
 Welcome to the ZigZag tutorial series! This series of labs will guide you through the key concepts and functionalities of the ZigZag framework for HW Architecture-Mapping Design Space Exploration (DSE) for Deep Learning (DL) accelerators.
