@@ -7,8 +7,8 @@ operational_array:
   sizes: [32, 32]
 
 memories:
-  rf_1B_I2:
-    size: 16384
+  rf_1B_I2: # I2 = weights  [K, C, FX, FY]
+    size: 391 #  7*7*8bit=392                 16bit = 2B if you make this bigger, more from SRAM can be stored in each PE's local weight register, so latency goes down
     r_bw: 8
     w_bw: 8
     r_cost: 0.095  # TODO
@@ -25,7 +25,7 @@ memories:
         tl: r_port_1
     served_dimensions: [] # Fully unrolled over all multipliers
 
-  rf_1B_I1:
+  rf_1B_I1: # I1 = inputs [C, OY, OX] stride 2 though, so OY and OX are halved.
     size: 8
     r_bw: 8
     w_bw: 8
@@ -41,9 +41,9 @@ memories:
     ports:
       - fh: w_port_1
         tl: r_port_1
-    served_dimensions: [D2] # One RF per column
+    served_dimensions: [D2] # One RF per row
 
-  rf_4B_O:
+  rf_4B_O: # O = outputs
     size: 32
     r_bw: 32
     w_bw: 32
@@ -60,10 +60,10 @@ memories:
         tl: r_port_1
         fl: w_port_2
         th: r_port_2
-    served_dimensions: [D1]  # One RF per row
+    served_dimensions: [D1]  # One RF per column
 
   sram_16KB_I2:
-    size: 131072
+    size: 131072 # 131072bit = 16KB
     r_bw: 256
     w_bw: 256
     r_cost: 10.5

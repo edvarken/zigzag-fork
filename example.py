@@ -1,7 +1,7 @@
 import pickle
 from datetime import datetime
 
-from zigzag import api
+from zigzag.api import get_hardware_performance_zigzag
 from zigzag.visualization.results.plot_cme import (
     bar_plot_cost_model_evaluations_breakdown,
 )
@@ -14,11 +14,12 @@ accelerator_path = "zigzag/inputs/hardware/tpu_like.yaml"
 mapping_path = "zigzag/inputs/mapping/tpu_like.yaml"
 pickle_filename = f"outputs/{model}-{accel}-saved_list_of_cmes.pickle"
 
-
-energy, latency, cmes = api.get_hardware_performance_zigzag(
+temporal_mapping_search_engine = "loma"
+energy, latency, cmes = get_hardware_performance_zigzag(
     workload=workload_path,
     accelerator=accelerator_path,
     mapping=mapping_path,
+    temporal_mapping_search_engine=temporal_mapping_search_engine,
     opt="latency", # "energy"
     dump_folder=f"outputs/{datetime.now()}",
     pickle_filename=pickle_filename,
