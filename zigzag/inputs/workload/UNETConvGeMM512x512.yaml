@@ -1,0 +1,111 @@
+################################# GeMMs #########################################
+- id: 0
+  name: encoder0_attention_QxK # Q and K are both matrices with size: [1, 8, 4096, 40]
+  operator_type: Gemm
+  equation: O[h][l][j]+=W[h][l][d]*I[h][l][d] # O has size [1, 8, 4096, 4096]
+  loop_dims: [H, L, D, J] # (B=batch_size=1, H=n_heads=8, L=sequence length=64*64, D=d_head= 40 = 320/8, J=L=4096)
+  loop_sizes: [8, 4096, 40, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 0 # I = transposed K-matrix
+    W: 0 # W = Q-matrix
+- id: 1
+  name: encoder0_attention_WEIGHTxV # WEIGHT has size [1,8,4096,4096] and V has size [1, 8, 4096, 40]
+  operator_type: Gemm
+  equation: O[h][l][d]+=W[h][l][j]*I[h][l][d] # O has size [1, 8, 4096, 40]
+  loop_dims: [H, L, D, J]
+  loop_sizes: [8, 4096, 40, 4096]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 1 # I = V-matrix
+    W: 1 # W = WEIGHT-matrix
+
+- id: 2
+  name: mid_attention_QxK # Q and K are both matrices with size: [1, 8, 64, 160]
+  operator_type: Gemm
+  equation: O[h][l][j]+=W[h][l][d]*I[h][l][d] # O has size [1, 8, 64, 64]
+  loop_dims: [H, L, D, J] # (B=batch_size=1, H=n_heads=8, L=sequence length=8*8, D=d_head= 160 = 1280/8, J=64)
+  loop_sizes: [8, 64, 160, 64]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 2 # I = transposed K-matrix
+    W: 2 # W = Q-matrix
+- id: 3
+  name: mid_attention_WEIGHTxV # WEIGHT has size [1,8,64,64] and V has size [1, 8, 64, 160]
+  operator_type: Gemm
+  equation: O[h][l][d]+=W[h][l][j]*I[h][l][d] # O has size [1, 8, 64, 160]
+  loop_dims: [H, L, D, J]
+  loop_sizes: [8, 64, 160, 64]
+  operand_precision:
+    W: 8
+    I: 8
+    O: 16 
+    O_final: 8 
+  operand_source:
+    I: 3 # I = V-matrix
+    W: 3 # W = WEIGHT-matrix
+
+
+################################# CONVOLUTIONS W4A8 #########################################
+# conv0_encoder3_3x3: 3x3 convolution with 320 input channels and 320 output channels
+- id: 4 # padding=1 around all four sides. 
+  name: conv1_encoder0_3x3
+  operator_type: Conv
+  equation: O[k][oy][ox]+=W[k][c][fy][fx]*I[c][iy][ix] # (IY, IX) = (64, 64)
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy] # STRIDE 1
+  loop_dims: [K, C, OY, OX, FY, FX]
+  loop_sizes: [320, 320, 64, 64, 3, 3] # (OY, OX) = (64, 64)
+  operand_precision:
+    W: 4
+    I: 8
+    O: 12 
+    O_final: 8 
+  operand_source:
+    I: 4
+    W: 4
+
+# conv0_encoder3_3x3: 3x3 convolution with 1280 input channels and 1280 output channels, STRIDE 2
+- id: 5 # padding=1 around all four sides. 
+  name: conv0_encoder3_3x3
+  operator_type: Conv
+  equation: O[k][oy][ox]+=W[k][c][fy][fx]*I[c][iy][ix] # (IY, IX) = (16, 16)
+  dimension_relations: [ix=2*ox+1*fx, iy=2*oy+1*fy] # STRIDE 2
+  loop_dims: [K, C, OY, OX, FY, FX]
+  loop_sizes: [1280, 1280, 8, 8, 3, 3] # (OY, OX) = (8, 8)
+  operand_precision:
+    W: 4
+    I: 8
+    O: 12 
+    O_final: 8 
+  operand_source:
+    I: 5
+    W: 5
+
+# conv0_mid_3x3: 3x3 convolution with 1280 input channels and 1280 output channels
+- id: 6 # padding=1 around all four sides, with a kernel of 3x3 this means (IY, IX) = (OY, OX)
+  name: conv0_mid_3x3
+  operator_type: Conv
+  equation: O[k][oy][ox]+=W[k][c][fy][fx]*I[c][iy][ix]
+  dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+  loop_dims: [K, C, OY, OX, FY, FX]
+  loop_sizes: [1280, 1280, 8, 8, 3, 3] # (OY, OX) = (8, 8) same as input dimensions
+  operand_precision:
+    W: 4
+    I: 8
+    O: 12 
+    O_final: 8 
+  operand_source:
+    I: 6
+    W: 6
