@@ -1,0 +1,68 @@
+- name: default
+  spatial_mapping:
+    D1:
+      - H, 8
+    D2:
+      - L, 64
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1
+
+- name: Gemm
+  spatial_mapping:
+    D1:
+      - D, 32 
+    D2:
+      - L, 32 
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+
+# adjust mappings so Output stationary for every type of GeMM!
+- name: encoder0_attention_QxK
+  spatial_mapping:
+    D1:
+      - J, 32 # J is partially spatially unrolled: (J=4096)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=4096)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: encoder0_attention_WEIGHTxV
+  spatial_mapping:
+    D1:
+      - D, 32 # D is partially spatially unrolled: (D=40) in the 2nd iteration this 
+      # will be pretty suboptimal since only 8 / 32 PE rows will be active:(
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=4096)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: mid_attention_QxK
+  spatial_mapping:
+    D1:
+      - J, 32 # J is partially spatially unrolled: (J=64)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=64)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: mid_attention_WEIGHTxV
+  spatial_mapping:
+    D1:
+      - D, 32 # D is partially spatially unrolled: (D=160) (160 = 5*32)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=64)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs

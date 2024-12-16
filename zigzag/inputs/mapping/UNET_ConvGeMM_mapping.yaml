@@ -1,0 +1,109 @@
+- name: default
+  spatial_mapping:
+    D1:
+      - H, 8
+    D2:
+      - L, 64
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1
+
+
+# adjust mappings so Output stationary for every type of GeMM!
+- name: encoder0_attention_QxK
+  spatial_mapping:
+    D1:
+      - J, 32 # J is partially spatially unrolled: (J=4096)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=4096)
+    D3:
+      - H, 8 # H is fully spatially unrolled: (H=8)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: encoder0_attention_WEIGHTxV
+  spatial_mapping:
+    D1:
+      - D, 32 # D is partially spatially unrolled: (D=40) in the 2nd iteration this 
+      # will be pretty suboptimal since only 8 / 32 PE rows will be active:(
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=4096)
+    D3:
+      - H, 8 # H is fully spatially unrolled: (H=8)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: mid_attention_QxK
+  spatial_mapping:
+    D1:
+      - J, 32 # J is partially spatially unrolled: (J=64)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=64)
+    D3:
+      - H, 8 # H is fully spatially unrolled: (H=8)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: mid_attention_WEIGHTxV
+  spatial_mapping:
+    D1:
+      - D, 32 # D is partially spatially unrolled: (D=160) (160 = 5*32)
+    D2:
+      - L, 32 # L is partially spatially unrolled: (L=64)
+    D3:
+      - H, 8 # H is fully spatially unrolled: (H=8)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+
+# adjust mappings so Weight stationary for every type of Conv!
+- name: conv1_encoder0_3x3 # stride 1
+  spatial_mapping:
+    D1:
+      - K, 32 # K is partially spatially unrolled: (K=320)
+    D2:
+      - C, 32 # C is partially spatially unrolled: (C=320)
+    D3:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: conv0_encoder3_3x3 # stride 2
+  spatial_mapping:
+    D1:
+      - K, 32 # K is partially spatially unrolled: (K=1280)
+    D2:
+      - C, 32 # C is partially spatially unrolled: (C=1280)
+    D3:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: conv0_mid_3x3 # stride 1
+  spatial_mapping:
+    D1:
+      - K, 32 # K is partially spatially unrolled: (K=1280)
+    D2:
+      - C, 32 # C is partially spatially unrolled: (C=1280)
+    D3:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
