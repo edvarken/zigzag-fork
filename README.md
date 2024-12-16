@@ -3,8 +3,8 @@ git push zigzag-fork
 
 # run zigzag for UNET
 python UNET_main.py --model UNETGeMM512x512 --accel UNET_ConvGeMM_accelerator --mapping UNET_ConvGeMM_mapping
-
-
+python UNET_main.py --model UNETConv512x512 --accel UNET_ConvGeMM_accelerator --mapping UNET_ConvGeMM_mapping
+python UNET_main.py --model UNETConvGeMM512x512 --accel UNET_ConvGeMM_accelerator --mapping UNET_ConvGeMM_mapping
 
 # 🌀 ZigZag Tutorial Series
 
