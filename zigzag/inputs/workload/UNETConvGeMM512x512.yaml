@@ -109,3 +109,37 @@
   operand_source:
     I: 6
     W: 6
+
+
+# CONV1x1
+# - id: 7 # no padding, with a kernel of 1x1 this means (IY, IX) = (OY, OX)
+#   name: resconv_encoder1_1x1 # stride=1
+#   operator_type: Conv # a 1x1 convolution, but shall be executed as a GeMM
+#   equation: O[k][oy][ox]+=W[k][c][fy][fx]*I[c][iy][ix]
+#   dimension_relations: [ix=1*ox+1*fx, iy=1*oy+1*fy]
+#   loop_dims: [K, C, OY, OX, FY, FX]
+#   loop_sizes: [640, 320, 32, 32, 1, 1] # (OY, OX) = (32, 32) same as input dimensions
+#   operand_precision:
+#     W: 4
+#     I: 8
+#     O: 12 
+#     O_final: 8 
+#   operand_source:
+#     I: 7
+#     W: 7
+
+# CONV1x1
+# - id: 7 # no padding, with a kernel of 1x1 this means (IY, IX) = (OY, OX)
+#   name: resconv_encoder1_1x1 # stride=1
+#   operator_type: Gemm # a 1x1 convolution, but shall be executed as a GeMM
+#   equation: O[k][xy]+=W[k][c]*I[c][xy]
+#   loop_dims: [K, C, XY]
+#   loop_sizes: [640, 320, 1024] 
+#   operand_precision:
+#     W: 8
+#     I: 8
+#     O: 16
+#     O_final: 8 
+#   operand_source:
+#     I: 7
+#     W: 7

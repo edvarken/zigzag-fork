@@ -1,0 +1,30 @@
+- id: 0
+  name: enc_level0_transformer_block0__StaticMM0_0
+  operator_type: Gemm
+  equation: O[l][d]+=I[l][c]*W[c][d]
+  loop_dims: [L, C, D] # (L=sequence length=64*64, C=input_channels=320, D=d_embed=960)
+  loop_sizes: [4096, 320, 960]
+  operand_precision:
+    W: 8 # W = Weight matrix [320, 960]
+    I: 8 # I = flattened input tensor [4096, 320]
+    O: 16  # O = output tensor [4096, 960] -> chunk in 3 matrices and transpose to get Q,K,V
+    O_final: 8 
+  operand_source:
+    I: 0 
+    W: 0 
+
+# - id: 1
+#   name: encoder0_attention_WEIGHTxV # WEIGHT has size [8,4096,4096] and V has size [8, 4096, 40]
+#   operator_type: Gemm
+#   equation: O[h][l][d]+=W[h][l][j]*I[h][l][d] # O has size [8, 4096, 40]
+#   loop_dims: [H, L, D, J]
+#   loop_sizes: [8, 4096, 40, 4096]
+#   operand_precision:
+#     W: 8
+#     I: 8
+#     O: 16 
+#     O_final: 8 
+#   operand_source:
+#     I: 1 # I = V-matrix
+#     W: 1 # W = WEIGHT-matrix
+

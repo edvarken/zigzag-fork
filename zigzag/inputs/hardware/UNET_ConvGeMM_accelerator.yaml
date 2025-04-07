@@ -21,10 +21,10 @@ memories:
     # but for Conv3x3, this is too much, since same 9 inputs are needed for every D1=K index
     # however we will need the unrolling of inputs over D1 for the GeMM where D1 = D or J, so keep it
 
-  rf_2B_O: # 32 bit output=accumulation regs
-    size: 32
-    r_bw: 32
-    w_bw: 32
+  rf_2B_O: # 16 bit output=accumulation regs: should only be 12bit for 4bit weight x 8bit activation?
+    size: 16
+    r_bw: 16
+    w_bw: 16
     r_cost: 0.04
     w_cost: 0.04
     area: 0
@@ -121,7 +121,7 @@ memories:
     served_dimensions: [D1, D2, D3]
 
   dram:
-    size: 10000000000
+    size: 64000000000 # 8GB
     r_bw: 64
     w_bw: 64
     r_cost: 700

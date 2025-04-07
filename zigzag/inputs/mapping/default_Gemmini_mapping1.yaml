@@ -1,0 +1,59 @@
+- name: default
+  spatial_mapping:
+    D1:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+    D2:
+      - K, 16 # K is partially spatially unrolled: (K=320 or 640 or 1280)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 # activations=inputs
+
+- name: enc_level0_resnet_block0__CONV3_0 # stride 1
+  spatial_mapping:
+    D1:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+    D2:
+      - K, 16 # K is partially spatially unrolled: (K=320)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1 
+
+- name: level0_Downsample__CONV3_0 # stride 2!
+  spatial_mapping:
+    D1:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+    D2:
+      - K, 16 # K is partially spatially unrolled: (K=320)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1
+
+- name: enc_level2_resnet_block1__CONV3_0 # stride 1
+  spatial_mapping:
+    D1:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+    D2:
+      - K, 16 # K is partially spatially unrolled: (K=1280)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1
+
+- name: mid_resnet_block0__CONV3_0 # stride 1
+  spatial_mapping:
+    D1:
+      - FY, 3 # FY is fully spatially unrolled: (FY=3)
+      - FX, 3 # FX is fully spatially unrolled: (FX=3)
+    D2:
+      - K, 16 # K is partially spatially unrolled: (K=1280)
+  memory_operand_links:
+    O: O
+    W: I2
+    I: I1
