@@ -37,9 +37,9 @@ memories:
         th: r_port_2
     served_dimensions: [] # Fully unrolled over all multipliers
 
-  sram_2MB: # 2 MiByte = 16M bit
+  sram_2MB: # 2 MegaByte = 16Megabit = 2^24 bit
     size: 16777216 # = 2^24 bit
-    r_bw: 2048
+    r_bw: 2048 # 2048bits per cycle or 256 INT8 values per cycle
     w_bw: 2048
     r_cost: 416.16
     w_cost: 378.4
