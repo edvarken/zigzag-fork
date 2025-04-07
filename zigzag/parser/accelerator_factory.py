@@ -197,9 +197,9 @@ class MemoryFactory:
             ports=memory_ports,
             auto_cost_extraction=self.data["auto_cost_extraction"],
             shared_memory_group_id=self.shared_mem_group_id,
-            is_imc=self.is_imc,
-            cacti_size_scaling=self.cacti_size_scaling,
-            cacti_bw_scaling=self.cacti_bw_scaling,
+            # is_imc=self.is_imc,
+            # cacti_size_scaling=self.cacti_size_scaling,
+            # cacti_bw_scaling=self.cacti_bw_scaling,
         )
 
     def add_memory_to_graph(self, mem_graph: MemoryHierarchy) -> None:

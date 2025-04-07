@@ -9,116 +9,126 @@ name: Gemmini_accelerator_BOTH_largeSRAMs_realBWs
 memories:
   rf_4B: # registers inside systolic array, need to be size of Accumulation register so 32bit
     size: 32 # staticMM: 8bit * 16bit = 24bit, dynamicMM: 16bit * 16bit = 32bit, CONV3: 8bit * 16bit = 24bit
-    r_bw: 32
-    w_bw: 32
     r_cost: 0.01
     w_cost: 0.01
     area: 0
-    r_port: 1
-    w_port: 1
-    rw_port: 0
     latency: 1
-    auto_cost_extraction: False
-    operands: [I2, O] # I2 = weights for WS, O = outputsfor OS
+    operands: [I2, O] # I2 = weights for WS, O = outputs for OS
     ports:
-      - fh: w_port_1
-        tl: r_port_1
-        fl: w_port_1 # we need these since could also be used for outputs later(OS)
-        th: r_port_1
-    served_dimensions: [] # so 16x16=256 instances of this register
-
+      - name: r_port_1
+        type: read
+        bandwidth_min: 32
+        bandwidth_max: 32
+        allocation: 
+          - I2, tl
+          - O, tl
+          - O, th
+      - name: w_port_1
+        type: write
+        bandwidth_min: 32
+        bandwidth_max: 32
+        allocation: 
+          - I2, fh
+          - O, fh
+          - O, fl
+    served_dimensions: [] # Fully unrolled over all multipliers
 
   sram_sp_512KiB: # 4 banks of 4096 rows each
     size: 4194304 # 4 * 2^20 = 2^22=4194304=512KiB = 4(banks)*4096(rows)*16(DIM)*16(BF16)
-    r_bw: 256 # bits read per cycle, needed to fetch 16(DIM) 16bit inputs into systolic array.  16(DIM)*16(BF16)
-    w_bw: 256
-    r_cost: 22.9 # ?
-    w_cost: 52.01 # ?
-    area: 0 # ?
-    r_port: 1 # 4 banks, each having a separate read and write port: but just model as one 256 bit read
-    w_port: 1
-    rw_port: 0 
+    r_cost: 208.08
+    w_cost: 189.2
+    area: 0
     latency: 1
-    min_r_granularity: 64 # i.e. reading from 1 bank?(matrices A,B,C,D each get their own bank)
-    min_w_granularity: 64
-    operands: [I1, I2] # inputs and weights
+    operands: [I1, I2]  # I1=inputs, # I2=weights
     ports:
-      - fh: w_port_1 # I1=inputs
-        tl: r_port_1
-      - fh: w_port_1 # I2=weights
-        tl: r_port_1
+      - name: r_port_1
+        type: read
+        bandwidth_min: 256 # bits read per cycle, needed to fetch 16(DIM) 16bit inputs into systolic array.  16(DIM)*16(BF16)
+        bandwidth_max: 256 # i.e. reading from 1 bank?(matrices A,B,C,D each get their own bank)
+        allocation: 
+          - I1, tl
+          - I2, tl
+      - name: w_port_1
+        type: write
+        bandwidth_min: 256 # 4 banks, each having a separate read and write port: but just model as one 256 bit read
+        bandwidth_max: 256
+        allocation: 
+          - I1, fh
+          - I2, fh
     served_dimensions: [D1, D2] # 1 instance
 
   sram_acc_64KiB: # 2 banks of 512 rows, 16*32(accType)=512bit wide
     size: 524288 # 2* 2^18=524288bit=64KiB = 2(banks)*512(rows)*16(DIM)*32(accType)
-    r_bw: 512 # bits read per cycle: needed to fetch 16 32bit outputs into/out of systolic array. 16(DIM)*32(accType) = 512bit
-    w_bw: 512
-    r_cost: 22.9 # ?
-    w_cost: 52.01 # ?
-    area: 0 # ?
-    r_port: 1 # two banks, each bank consists of 16(DIM)*4=64 rows? NO, each bank consists of 16*32=512 rows
-    w_port: 1
-    rw_port: 0
+    r_cost: 208.08
+    w_cost: 189.2
+    area: 0
     latency: 1
-    min_r_granularity: 256 # i.e. reading from 1 bank?
-    min_w_granularity: 256
-    operands: [O] # Outputs only
+    operands: [I1, I2]  # I1=inputs, # I2=weights
     ports:
-      - fh: w_port_1 # O=partials sums/outputs (we need to be able to place an initial bias value already inside the accumulator)
-        tl: r_port_1
-        fl: w_port_1 # this is writing the partial sums FROM the systolic array's regs TO this accumulator
-        th: r_port_1
+      - name: r_port_1 # O=partials sums/outputs (we need to be able to place an initial bias value already inside the accumulator)
+        type: read
+        bandwidth_min: 256 
+        bandwidth_max: 512  # two banks, each bank consists of 16(DIM)*4=64 rows? NO, each bank consists of 16*32=512 rows
+        allocation: 
+          - O, tl 
+          - O, th
+      - name: w_port_1  # this is writing the partial sums FROM the systolic array's regs TO this accumulator
+        type: write
+        bandwidth_min: 256 # i.e. reading from 1 bank?
+        bandwidth_max: 512 # bits read per cycle: needed to fetch 16 32bit outputs into/out of systolic array. 16(DIM)*32(accType) = 512bit
+        allocation: 
+          - O, fh
+          - O, fl
     served_dimensions: [D1, D2] # 1 instance
+
 
   # The default ``RocketConfig`` shared L2 cache uses a single bank with 512 KiB capacity and 8-way set-associativity
   # let's make it 1 MiB
   L2_shared_cache:
     size: 8388608 # 1* 2^23 = 8388608 = 1MiB
-    r_bw: 128 # dma_buswidth
-    w_bw: 128
-    r_cost: 208.08 # (from Tesla_npu cost for 1 MB SRAM.)
-    w_cost: 189.2
+    r_cost: 300 # ?
+    w_cost: 300 # ?
     area: 0
-    r_port: 1
-    w_port: 1
-    rw_port: 0
     latency: 1
-    min_r_granularity: 128
-    min_w_granularity: 128
-    operands: [I1, O, I2]
+    operands: [I1, I2, O]
     ports:
-      - fh: w_port_1
-        tl: r_port_1
-      - fh: w_port_1
-        tl: r_port_1
-        fl: w_port_1
-        th: r_port_1
-      - fh: w_port_1
-        tl: r_port_1
-    served_dimensions: [D1, D2, D3]
+      - name: rw_port_1
+        type: read_write
+        bandwidth_min: 128 # dma_buswidth
+        bandwidth_max: 128
+        allocation: 
+          - I1, fh
+          - I1, tl
+          - I2, fh
+          - I2, tl
+          - O, fh
+          - O, tl
+          - O, fl
+          - O, th
+    served_dimensions: [D1, D2]
 
 
   dram: # main memory: TileLink AXI4 DRAM controller moves data between DRAM and L2 cache, single channel DRAM by default
     size: 2147483648 # 2^31=2GiB: UNET is 800MiB
-    r_bw: 128 #  dma_buswidth=128bit @1GHZ (for 8bit multipliers) or @200MHz: 25.6Gbps (for 16bit multipliers)
-    w_bw: 128
     r_cost: 700 # ?
     w_cost: 750 # ?
     area: 0
-    r_port: 0
-    w_port: 0
-    rw_port: 1
-    latency: 10
+    latency: 1
     operands: [I1, I2, O]
     ports:
-      - fh: rw_port_1
-        tl: rw_port_1
-      - fh: rw_port_1
-        tl: rw_port_1
-      - fh: rw_port_1
-        tl: rw_port_1
-        fl: rw_port_1
-        th: rw_port_1
+      - name: rw_port_1
+        type: read_write
+        bandwidth_min: 128 #  dma_buswidth=128bit @1GHZ (for 8bit multipliers) or @200MHz: 25.6Gbps (for 16bit multipliers)
+        bandwidth_max: 128
+        allocation: 
+          - I1, fh
+          - I1, tl
+          - I2, fh
+          - I2, tl
+          - O, fh
+          - O, tl
+          - O, fl
+          - O, th
     served_dimensions: [D1, D2] # 1 instance
 
 operational_array:

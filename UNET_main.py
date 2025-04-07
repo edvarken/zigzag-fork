@@ -57,4 +57,7 @@ if __name__ == "__main__":
     # run_zigzag(model="UNETConv512x512", accel="default_Gemmini_accelerator", mapping= "default_Gemmini_mapping3")
 
     # ############################################
-    run_zigzag(model="UNETStaticMatMul512x512", accel="default_Gemmini_accelerator_OS", mapping= "default_Gemmini_mapping_StaticMatMul")
+    # run_zigzag(model="UNETStaticMatMul512x512", accel="default_Gemmini_accelerator_OS", mapping= "default_Gemmini_mapping_StaticMatMul")
+
+    run_zigzag(model="UNETStaticMatMul512x512", accel="Gemmini_accelerator_BOTH_largeSRAMs_realBWs", mapping= "default_Gemmini_mapping_StaticMatMul")
+
