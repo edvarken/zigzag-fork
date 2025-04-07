@@ -1,32 +1,15 @@
 name: tpu_like
 
 memories:
-<<<<<<< HEAD
   rf_128B: # the first one we define will be the 'lowest-level=closest to the MAC array', even though it is larger in size than the rf_2B!!
     size: 1024 # 1024bit = 128Byte
     r_bw: 8 # read bandwidth in number of bits per cycle
     w_bw: 8
-=======
-  rf_128B:
-    size: 1024
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
     r_cost: 0.095
     w_cost: 0.095
     area: 0
     latency: 1
-<<<<<<< HEAD
     operands: [I2] # this memory will save the I2 data, (which are the Weights W in the mapping/tpu_like.yaml)
-    ports: # possible data movements: only fh and tl for this 'I2=Weights in mapping/tpu_like.yaml' 128Byte register file memory
-      - fh: w_port_1 # from high: I2 provided by higher memory-level written to this rf_128B
-        tl: r_port_1 # to low: I2 read out from current level, to go to lower level memory!
-    served_dimensions: [] # Fully unrolled over all multipliers
-
-  rf_2B:
-    size: 16 # 16bit = 2Byte
-    r_bw: 16
-    w_bw: 16
-=======
-    operands: [I2]
     ports:
       - name: r_port_1
         type: read
@@ -44,25 +27,12 @@ memories:
 
   rf_2B:
     size: 16
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
     r_cost: 0.021
     w_cost: 0.021
     area: 0
     latency: 1
     operands: [O] # this memory will save Output O data(so to accumulate the partial sums in each MAC unit?)
     ports:
-<<<<<<< HEAD
-      - fh: w_port_1 # this is for O
-        tl: r_port_1
-        fl: w_port_2
-        th: r_port_2
-    served_dimensions: [] # Fully unrolled over all multipliers
-
-  sram_2MB: # 2 MegaByte = 16Megabit = 2^24 bit
-    size: 16777216 # = 2^24 bit
-    r_bw: 2048 # 2048bits per cycle or 256 INT8 values per cycle
-    w_bw: 2048
-=======
       - name: r_port_1
         type: read
         bandwidth_min: 16
@@ -91,35 +61,18 @@ memories:
 
   sram_2MB:
     size: 16777216
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
     r_cost: 416.16
     w_cost: 378.4
     area: 0
     latency: 1
-<<<<<<< HEAD
-    min_r_granularity: 64
-    min_w_granularity: 64
-    operands: [I1, O] # this memory will work with I1(input/activations) AND O(Output) data.
-    ports: # does this mean multiple ports in parallel?
-      - fh: w_port_1 # this is for I1
-=======
     operands: [I1, O]
     ports:
       - fh: w_port_1
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
         tl: r_port_1
       - fh: w_port_1 # this is for O
         tl: r_port_1
         fl: w_port_1
         th: r_port_1
-<<<<<<< HEAD
-    served_dimensions: [D1, D2] # this means there is only 1 instance of this 2MiB SRAM, (1 instance is serving all 32x32 operational units in the operational array)
-
-  dram:
-    size: 10000000000 # 16 GigaBit? # ~ 2^34
-    r_bw: 64
-    w_bw: 64
-=======
     ports:
       - name: r_port_1
         type: read
@@ -141,24 +94,10 @@ memories:
 
   dram:
     size: 10000000000
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
     r_cost: 700
     w_cost: 750
     area: 0
     latency: 1
-<<<<<<< HEAD
-    operands: [I1, I2, O] # this saves both I1(Inputs/activations in the mapping file), I2(Weights in the mapping file) and Output O
-    ports: # it has only 1 port: 'rw_port_1': all data movements are done via this port
-      - fh: rw_port_1 # this is for I1
-        tl: rw_port_1
-      - fh: rw_port_1 # this is for I2
-        tl: rw_port_1
-      - fh: rw_port_1 # this is for O
-        tl: rw_port_1
-        fl: rw_port_1
-        th: rw_port_1
-    served_dimensions: [D1, D2] # also means only 1 instance of this DRAM
-=======
     operands: [I1, I2, O]
     ports:
       - name: rw_port_1
@@ -175,7 +114,6 @@ memories:
           - O, fl
           - O, th
     served_dimensions: [D1, D2]
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
 
 operational_array:
   unit_energy: 0.04 # pJ
