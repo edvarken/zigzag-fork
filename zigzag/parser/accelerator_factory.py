@@ -170,11 +170,6 @@ class MemoryFactory:
         self.data = mem_data
         self.name = name
         self.shared_mem_group_id = shared_mem_group_id
-<<<<<<< HEAD
-        self.is_imc = is_imc
-        self.cacti_size_scaling = cacti_size_scaling
-        self.cacti_bw_scaling = cacti_bw_scaling
-=======
         self.memory_ports = None
 
     def create_memory_ports(self) -> tuple[MemoryPort, ...]:
@@ -188,7 +183,6 @@ class MemoryFactory:
             port = MemoryPort(port_name, port_type, port_bw_min, port_bw_max)
             memory_ports.append(port)
         return tuple(memory_ports)
->>>>>>> ccf7d7884fc865d3ac49c4dd2b83f9635b72e50e
 
     def create_memory_instance(self) -> MemoryInstance:
         memory_ports = self.create_memory_ports()
